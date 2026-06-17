@@ -435,6 +435,18 @@ function processCSV(text) {
     parsedTxns.push({ date: dateStr, month, type, finType, desc, walletCur, amount, debit, credit, balance, ref, category });
   }
 
+  // ── Compute opening balance per currency ──
+  // Opening = balance after first txn, reversed by that txn's effect
+  const firstSeen = {};
+  parsedTxns.forEach(t => {
+    if (t.balance > 0 && !firstSeen[t.walletCur]) {
+      const openingBal = t.balance - t.credit + t.debit;
+      firstSeen[t.walletCur] = { opening: openingBal, firstDate: t.date };
+    }
+  });
+  // attach to each txn for use in summary
+  parsedTxns._openingBal = firstSeen;
+
   buildSummary();
   renderAll();
 }
@@ -448,6 +460,7 @@ function buildSummary() {
     usdYield: 0, gbpYield: 0,
     byMonth: {}, byClient: {}, byCategory: {},
     closingBal: {},
+    openingBal: {},
     txnCount: parsedTxns.length,
     minDate: '', maxDate: ''
   };
@@ -488,6 +501,9 @@ function buildSummary() {
       if (t.walletCur === 'GBP') s.gbpExpenses += t.debit;
     }
   });
+
+  // Pull opening balances computed during parsing
+  s.openingBal = parsedTxns._openingBal || {};
 
   summary = s;
 }
@@ -666,49 +682,119 @@ function renderBS() {
   const s = summary;
   document.getElementById('bs-date').textContent = 'As of ' + s.maxDate;
 
-  const rows = [];
-  const addSection = l => rows.push({ type:'section', label:l });
-  const addRow = (l, cur, amt, cls='', note='') => rows.push({ type:'row', label:l, cur, amt, cls, note });
-  const addTotal = (l, cur, amt, cls='') => rows.push({ type:'total', label:l, cur, amt, cls });
-
-  addSection('ASSETS — CASH & LIQUID');
-  Object.entries(s.closingBal).forEach(([cur, bal]) => {
-    if (bal > 0) addRow(`${cur} wallet — closing balance`, cur, bal, 'pos');
+  // ── Per-currency totals of credits and debits ──
+  const curCredits = {}, curDebits = {};
+  parsedTxns.forEach(t => {
+    if (t.credit > 0) curCredits[t.walletCur] = (curCredits[t.walletCur] || 0) + t.credit;
+    if (t.debit  > 0) curDebits[t.walletCur]  = (curDebits[t.walletCur]  || 0) + t.debit;
   });
-  if (s.usdYield > 0) addRow('USD Yield balance (parked)', 'USD', s.usdYield, 'pos');
-  if (s.gbpYield > 0) addRow('GBP Yield balance (parked)', 'GBP', s.gbpYield, 'pos');
 
+  const rows = [];
+  const addSection = l          => rows.push({ type:'section', label:l });
+  const addRow    = (l,cur,amt,cls='',note='') => rows.push({ type:'row',   label:l, cur, amt, cls, note });
+  const addTotal  = (l,cur,amt,cls='')         => rows.push({ type:'total', label:l, cur, amt, cls });
+  const addMovement = (cur, open, close) => rows.push({ type:'movement', cur, open, close });
+
+  // ── SECTION 1: WALLET SUMMARY — one row per currency ──
+  addSection('WALLET BALANCES — OPENING & CLOSING');
+
+  // table header for movement rows is handled in the renderer
+  const currencies = [...new Set([
+    ...Object.keys(s.openingBal),
+    ...Object.keys(s.closingBal)
+  ])].sort();
+
+  currencies.forEach(cur => {
+    const open  = s.openingBal[cur]  ? s.openingBal[cur].opening  : 0;
+    const close = s.closingBal[cur] || 0;
+    addMovement(cur, open, close);
+  });
+
+  // ── SECTION 2: YIELD ──
+  if (s.usdYield > 0 || s.gbpYield > 0) {
+    addSection('YIELD BALANCES (parked, earning interest)');
+    if (s.usdYield > 0) addRow('USD Yield balance', 'USD', s.usdYield, 'pos', 'Company funds — not spent');
+    if (s.gbpYield > 0) addRow('GBP Yield balance', 'GBP', s.gbpYield, 'pos', 'Company funds — not spent');
+    const totalYield = s.usdYield + (s.gbpYield * 1.27); // rough USD equiv
+    addRow('Approx. combined yield (USD equiv.)', 'USD', Math.round(totalYield), 'pos', 'GBP converted at ~1.27 for reference only');
+  }
+
+  // ── SECTION 3: WALLET ACTIVITY DETAIL per currency ──
+  currencies.forEach(cur => {
+    const open   = s.openingBal[cur] ? s.openingBal[cur].opening : 0;
+    const close  = s.closingBal[cur] || 0;
+    const credits = curCredits[cur] || 0;
+    const debits  = curDebits[cur]  || 0;
+    addSection(`${cur} WALLET — ACTIVITY DETAIL`);
+    addRow('Opening balance', cur, open, open > 0 ? 'pos' : '');
+    addRow('Total credits (money in)', cur, credits, 'pos');
+    addRow('Total debits (money out)', cur, debits, 'neg');
+    addTotal('Closing balance', cur, close, close >= open ? 'pos' : 'neg');
+  });
+
+  // ── SECTION 4: LIABILITIES ──
   addSection('LIABILITIES');
   addRow('Formal liabilities identified', '—', '', '', 'None visible in this export');
-
-  // Recurring obligations
   const staffTxns = parsedTxns.filter(t => t.category === 'Staff / Contractor');
   if (staffTxns.length > 0) {
-    const last = staffTxns[staffTxns.length-1];
-    addRow('Est. recurring – contractor', last.walletCur, last.debit, 'amb', '/month approx.');
+    const last = staffTxns[staffTxns.length - 1];
+    addRow('Est. recurring – contractor payments', last.walletCur, last.debit, 'amb', '/month (based on recent invoices)');
   }
   const mktTxns = parsedTxns.filter(t => t.category === 'Marketing');
   if (mktTxns.length > 0) {
-    const last = mktTxns[mktTxns.length-1];
-    addRow('Est. recurring – marketing retainer', last.walletCur, last.debit, 'amb', '/month approx.');
+    const last = mktTxns[mktTxns.length - 1];
+    addRow('Est. recurring – marketing retainer', last.walletCur, last.debit, 'amb', '/month (based on recent payments)');
   }
 
-  addSection('ACTIVITY SUMMARY');
-  addRow('Total credits (all currencies)', '', '', '', `SGD ${fmt(s.sgdIncome)} + USD ${fmt(s.usdIncome)} + GBP ${fmt(s.gbpIncome)}`);
-  addRow('Total debits (operating only)', '', '', 'neg', `SGD ${fmt(s.sgdExpenses)} + USD ${fmt(s.usdExpenses)}`);
-  addRow('Yield parked (not spent)', 'USD', s.usdYield, 'pos');
+  // ── RENDER ──
+  let html = `<thead><tr>
+    <th style="width:38%">Item</th>
+    <th>Currency</th>
+    <th class="num">Opening</th>
+    <th class="num">Closing / Amount</th>
+    <th class="num">Change</th>
+  </tr></thead><tbody>`;
 
-  let html = '<thead><tr><th style="width:45%">Item</th><th>Currency</th><th class="num">Amount</th></tr></thead><tbody>';
   rows.forEach(r => {
     if (r.type === 'section') {
-      html += `<tr class="section-row"><td colspan="3">${r.label}</td></tr>`;
+      html += `<tr class="section-row"><td colspan="5">${r.label}</td></tr>`;
+
+    } else if (r.type === 'movement') {
+      const change = r.close - r.open;
+      const chgCls = change >= 0 ? 'pos' : 'neg';
+      const chgSign = change >= 0 ? '+' : '';
+      const arrow = change >= 0 ? '↑' : '↓';
+      html += `<tr style="font-weight:600">
+        <td>${r.cur} wallet</td>
+        <td style="color:var(--ink-3);font-size:12px">${r.cur}</td>
+        <td class="num" style="color:var(--ink-2)">${fmt(r.open)}</td>
+        <td class="num pos">${fmt(r.close)}</td>
+        <td class="num ${chgCls}">${arrow} ${chgSign}${fmt(Math.abs(change))}</td>
+      </tr>`;
+
     } else if (r.type === 'total') {
-      html += `<tr class="total-row"><td><strong>${r.label}</strong></td><td><strong>${r.cur}</strong></td><td class="num ${r.cls}"><strong>${fmt(r.amt)}</strong></td></tr>`;
+      html += `<tr class="total-row">
+        <td><strong>${r.label}</strong></td>
+        <td><strong>${r.cur}</strong></td>
+        <td class="num">—</td>
+        <td class="num ${r.cls}"><strong>${fmt(r.amt)}</strong></td>
+        <td class="num">—</td>
+      </tr>`;
+
     } else {
+      // regular row — opening col blank, amount in closing col, change blank
       const amtDisplay = typeof r.amt === 'number' && r.amt > 0 ? fmt(r.amt) : (r.note || '—');
-      html += `<tr><td>${r.label}</td><td style="color:var(--ink-3);font-size:12px">${r.cur}</td><td class="num ${r.cls}">${amtDisplay}</td></tr>`;
+      const noteDisplay = (typeof r.amt === 'number' && r.amt > 0 && r.note) ? `<span style="font-size:11px;color:var(--ink-3);margin-left:6px">${r.note}</span>` : '';
+      html += `<tr>
+        <td>${r.label}</td>
+        <td style="color:var(--ink-3);font-size:12px">${r.cur}</td>
+        <td class="num">—</td>
+        <td class="num ${r.cls}">${amtDisplay}${noteDisplay}</td>
+        <td class="num">—</td>
+      </tr>`;
     }
   });
+
   html += '</tbody>';
   document.getElementById('bs-table').innerHTML = html;
 }
