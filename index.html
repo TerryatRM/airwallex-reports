@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airwallex Financial Analyzer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --ink: #0f1923;
+    --ink-2: #3a4a5c;
+    --ink-3: #6b7f94;
+    --paper: #f7f9fc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --green: #0d9e72;
+    --green-light: #e6f7f2;
+    --red: #d44f2e;
+    --red-light: #fdf0ed;
+    --amber: #c07f1a;
+    --amber-light: #fdf4e3;
+    --blue: #1a5fbf;
+    --blue-light: #e8f0fd;
+    --accent: #1a5fbf;
+    --radius: 8px;
+    --radius-lg: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--ink);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .header-brand span { color: #5b9cf6; }
+  .btn-settings {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-settings:hover { background: rgba(255,255,255,0.18); }
+
+  /* ── MAIN LAYOUT ── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ── UPLOAD ZONE ── */
+  #upload-section { margin-bottom: 32px; }
+
+  .upload-card {
+    background: var(--surface);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .upload-card:hover, .upload-card.drag { border-color: var(--accent); background: var(--blue-light); }
+  .upload-card input { display: none; }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-title { font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .upload-sub { font-size: 13px; color: var(--ink-3); }
+  .upload-sub a { color: var(--accent); cursor: pointer; text-decoration: none; }
+
+  /* ── METRICS ── */
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .metric {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+  }
+  .metric-label { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .metric-value { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
+  .metric-value.pos { color: var(--green); }
+  .metric-value.neg { color: var(--red); }
+  .metric-value.neu { color: var(--ink); }
+  .metric-sub { font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: var(--border); border-radius: var(--radius); padding: 3px; width: fit-content; }
+  .tab {
+    padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    cursor: pointer; color: var(--ink-3); background: none; border: none;
+    transition: all 0.12s; white-space: nowrap;
+  }
+  .tab.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+  /* ── CARDS ── */
+  .card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.05em; }
+  .card-body { padding: 20px; }
+
+  /* ── TABLES ── */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--ink); }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { background: var(--paper); }
+  .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tbl .pos { color: var(--green); font-weight: 500; }
+  .tbl .neg { color: var(--red); font-weight: 500; }
+  .tbl .amb { color: var(--amber); }
+  .tbl .section-row td { background: #f0f4f9; font-weight: 600; font-size: 12px; color: var(--ink-2); padding: 6px 12px; }
+  .tbl .total-row td { background: var(--blue-light); font-weight: 700; border-top: 1px solid var(--border); }
+
+  /* ── BADGE ── */
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+
+  /* ── CHARTS ── */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 680px) { .charts-grid { grid-template-columns: 1fr; } }
+  .chart-wrap { height: 240px; position: relative; }
+
+  /* ── INSIGHTS ── */
+  .insight-item {
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    border-left: 3px solid transparent;
+  }
+  .insight-item.flag { background: var(--red-light); border-color: var(--red); }
+  .insight-item.good { background: var(--green-light); border-color: var(--green); }
+  .insight-item.note { background: var(--amber-light); border-color: var(--amber); }
+  .insight-item.info { background: var(--blue-light); border-color: var(--blue); }
+  .insight-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .insight-item.flag .insight-label { color: var(--red); }
+  .insight-item.good .insight-label { color: var(--green); }
+  .insight-item.note .insight-label { color: var(--amber); }
+  .insight-item.info .insight-label { color: var(--blue); }
+  .insight-finding { font-size: 13px; color: var(--ink); margin-bottom: 4px; font-weight: 500; }
+  .insight-action { font-size: 12px; color: var(--ink-2); }
+
+  .ai-block {
+    background: var(--ink);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    color: #e8edf4;
+    font-size: 13.5px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    margin-bottom: 20px;
+  }
+  .ai-block .ai-label { font-size: 11px; color: #5b9cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+
+  /* ── LOADING ── */
+  .spinner { width: 18px; height: 18px; border: 2px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-bar { display: flex; align-items: center; padding: 20px; font-size: 13px; color: var(--ink-3); }
+
+  /* ── MODAL ── */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius-lg); padding: 28px; width: 440px; max-width: 95vw; }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--ink-2); margin-bottom: 18px; line-height: 1.6; }
+  .modal input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 13px; font-family: monospace;
+    margin-bottom: 8px; color: var(--ink);
+  }
+  .modal input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .modal-note { font-size: 11px; color: var(--ink-3); margin-bottom: 18px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn { padding: 9px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--ink); }
+  .btn:hover { background: var(--paper); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
+  .btn-primary:hover { opacity: 0.88; }
+
+  /* ── MISC ── */
+  #results-section { display: none; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .empty { text-align: center; padding: 48px; color: var(--ink-3); font-size: 13px; }
+  .section-divider { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); padding: 18px 0 8px; }
+  .ai-generate-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--ink); color: #fff; border: none;
+    padding: 10px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 500;
+    cursor: pointer; margin-bottom: 20px;
+  }
+  .ai-generate-btn:hover { opacity: 0.85; }
+  .ai-generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="5" fill="#1a5fbf"/><path d="M4 14l4-8 3 5 2-3 3 6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Airwallex <span>Financial Analyzer</span>
+  </div>
+  <button class="btn-settings" onclick="openSettings()">⚙ Settings</button>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- UPLOAD -->
+  <section id="upload-section">
+    <div class="upload-card" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept=".csv">
+      <div class="upload-icon">📂</div>
+      <div class="upload-title">Drop your Airwallex CSV here</div>
+      <div class="upload-sub">or <a onclick="event.stopPropagation();document.getElementById('file-input').click()">browse to upload</a> &nbsp;·&nbsp; Supports Airwallex Balance Activity export</div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results-section">
+
+    <!-- METRICS -->
+    <div class="metrics-grid" id="metrics-grid"></div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('overview')">Overview</button>
+      <button class="tab" onclick="showTab('pl')">P&amp;L</button>
+      <button class="tab" onclick="showTab('balance')">Balance Sheet</button>
+      <button class="tab" onclick="showTab('transactions')">Transactions</button>
+      <button class="tab" onclick="showTab('insights')">AI Insights</button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Income by Month</span></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chart-monthly"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Expense Breakdown</span></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chart-expenses"></canvas></div></div>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Revenue by Client (SGD)</span></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chart-clients"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Transaction Types</span></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chart-types"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P&L TAB -->
+    <div class="tab-content" id="tab-pl">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Profit & Loss Statement</span><span id="pl-period" style="font-size:12px;color:var(--ink-3)"></span></div>
+        <div class="card-body" style="padding:0">
+          <table class="tbl" id="pl-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BALANCE SHEET TAB -->
+    <div class="tab-content" id="tab-balance">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Account Balance Sheet</span><span id="bs-date" style="font-size:12px;color:var(--ink-3)"></span></div>
+        <div class="card-body" style="padding:0">
+          <table class="tbl" id="bs-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS TAB -->
+    <div class="tab-content" id="tab-transactions">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All Transactions</span>
+          <span id="txn-count" style="font-size:12px;color:var(--ink-3)"></span>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="tbl" id="txn-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI INSIGHTS TAB -->
+    <div class="tab-content" id="tab-insights">
+      <button class="ai-generate-btn" id="ai-btn" onclick="generateInsights()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#5b9cf6" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="#5b9cf6" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Generate AI analysis
+      </button>
+      <div id="ai-output"></div>
+      <div id="static-insights"></div>
+    </div>
+
+  </section>
+</main>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h3>Settings</h3>
+    <p>Enter your Anthropic API key to enable AI-powered analysis. Your key is stored only in your browser and never sent anywhere except Anthropic's API.</p>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
+    <div class="modal-note">Get a key at <strong>console.anthropic.com</strong> → API Keys → Create Key</div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save key</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let parsedTxns = [];
+let summary = {};
+
+// ── SETTINGS ──
+function openSettings() {
+  const k = localStorage.getItem('aw_api_key') || '';
+  document.getElementById('api-key-input').value = k;
+  document.getElementById('modal').classList.add('open');
+}
+function closeSettings() { document.getElementById('modal').classList.remove('open'); }
+function saveSettings() {
+  const k = document.getElementById('api-key-input').value.trim();
+  if (k) localStorage.setItem('aw_api_key', k);
+  closeSettings();
+  alert('API key saved.');
+}
+
+// ── FILE UPLOAD ──
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => processCSV(e.target.result);
+  reader.readAsText(file);
+}
+
+// ── CSV PARSER ──
+function processCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+
+  const idx = name => headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
+  const iTime = idx('Time'), iType = idx('Type'), iFinType = idx('Financial Transaction'),
+        iDesc = idx('Description'), iWalletCur = idx('Wallet Currency'),
+        iTgtCur = idx('Target Currency'), iTgtAmt = idx('Target Amount'),
+        iConvRate = idx('Conversion'), iAmt = idx('Amount'), iFee = idx('Fee'),
+        iDebit = idx('Debit Net'), iCredit = idx('Credit Net'),
+        iBal = idx('Account Balance'), iRef = idx('Reference');
+
+  parsedTxns = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    // Handle quoted fields with commas
+    const cols = [];
+    let inQ = false, cur = '';
+    for (const ch of lines[i] + ',') {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    const g = (j) => j >= 0 ? (cols[j] || '').replace(/^"|"$/g,'').replace(/,/g,'') : '';
+    const gn = (j) => parseFloat(g(j)) || 0;
+
+    const dateStr = g(iTime).split('T')[0];
+    const month = dateStr.substring(0, 7);
+    const type = g(iType);
+    const finType = g(iFinType);
+    const desc = g(iDesc);
+    const walletCur = g(iWalletCur);
+    const amount = gn(iAmt);
+    const debit = gn(iDebit);
+    const credit = gn(iCredit);
+    const balance = gn(iBal);
+    const ref = g(iRef);
+
+    if (!dateStr || !type) continue;
+
+    // Categorise
+    let category = 'Other';
+    const dl = desc.toLowerCase();
+    if (type === 'FEE') category = 'Bank Fee';
+    else if (type === 'YIELD') category = 'Yield Transfer';
+    else if (type === 'CONVERSION') category = 'FX Conversion';
+    else if (finType === 'PAYIN_SETTLEMENT') category = 'Revenue – Payin';
+    else if (type === 'DEPOSIT') category = 'Revenue – Deposit';
+    else if (type === 'PAYIN') category = 'Revenue – Payin';
+    else if (dl.includes('cambridge')) category = 'Marketing';
+    else if (dl.includes('ana liza') || dl.includes('gajete')) category = 'Staff / Contractor';
+    else if (dl.includes('dividend') || dl.includes('quarterly')) category = 'Director Dividend';
+    else if (dl.includes('vidiq') || dl.includes('heygen') || dl.includes('instantly') || dl.includes('higgsfield') || dl.includes('kie ai') || dl.includes('northnodes') || dl.includes('bayer') || dl.includes('grow on repeat') || dl.includes('demandgen') || dl.includes('million verifier') || dl.includes('easytorefer') || dl.includes('amazon') || dl.includes('google')) category = 'Software & Tools';
+    else if (dl.includes('cles llc') || dl.includes('refund')) category = 'Refund';
+    else if (type === 'PAYOUT') category = 'Payout';
+    else if (type === 'CARD') category = debit > 0 ? 'Software & Tools' : 'Card Refund';
+
+    parsedTxns.push({ date: dateStr, month, type, finType, desc, walletCur, amount, debit, credit, balance, ref, category });
+  }
+
+  buildSummary();
+  renderAll();
+}
+
+// ── SUMMARY ──
+function buildSummary() {
+  const s = {
+    sgdIncome: 0, usdIncome: 0, gbpIncome: 0,
+    sgdExpenses: 0, usdExpenses: 0, gbpExpenses: 0,
+    totalFees: { SGD: 0, USD: 0, GBP: 0 },
+    usdYield: 0, gbpYield: 0,
+    byMonth: {}, byClient: {}, byCategory: {},
+    closingBal: {},
+    txnCount: parsedTxns.length,
+    minDate: '', maxDate: ''
+  };
+
+  const incomeTypes = new Set(['Revenue – Payin','Revenue – Deposit','Card Refund']);
+  const expenseCategories = new Set(['Marketing','Staff / Contractor','Software & Tools','Refund','Payout','Director Dividend']);
+
+  parsedTxns.forEach(t => {
+    if (!s.minDate || t.date < s.minDate) s.minDate = t.date;
+    if (!s.maxDate || t.date > s.maxDate) s.maxDate = t.date;
+
+    // Closing balance per currency (last seen)
+    if (t.balance > 0) s.closingBal[t.walletCur] = t.balance;
+
+    // Monthly income
+    if (!s.byMonth[t.month]) s.byMonth[t.month] = { sgd: 0, usd: 0, gbp: 0, expenses: 0 };
+
+    if (t.category === 'Bank Fee') {
+      s.totalFees[t.walletCur] = (s.totalFees[t.walletCur] || 0) + t.debit;
+    } else if (t.category === 'Yield Transfer') {
+      if (t.walletCur === 'USD') s.usdYield += t.debit;
+      if (t.walletCur === 'GBP') s.gbpYield += t.debit;
+    } else if (t.category === 'FX Conversion') {
+      // skip for P&L
+    } else if (incomeTypes.has(t.category)) {
+      if (t.walletCur === 'SGD') { s.sgdIncome += t.credit; s.byMonth[t.month].sgd += t.credit; }
+      if (t.walletCur === 'USD') { s.usdIncome += t.credit; s.byMonth[t.month].usd += t.credit; }
+      if (t.walletCur === 'GBP') { s.gbpIncome += t.credit; s.byMonth[t.month].gbp += t.credit; }
+      // Client tracking
+      const clientMatch = t.desc.match(/^([^|]+)\s*\|/);
+      const client = clientMatch ? clientMatch[1].trim() : t.desc.substring(0, 35);
+      if (t.walletCur === 'SGD') s.byClient[client] = (s.byClient[client] || 0) + t.credit;
+    } else if (expenseCategories.has(t.category)) {
+      s.byCategory[t.category] = (s.byCategory[t.category] || 0) + (t.debit || 0);
+      s.byMonth[t.month].expenses += t.debit;
+      if (t.walletCur === 'SGD') s.sgdExpenses += t.debit;
+      if (t.walletCur === 'USD') s.usdExpenses += t.debit;
+      if (t.walletCur === 'GBP') s.gbpExpenses += t.debit;
+    }
+  });
+
+  summary = s;
+}
+
+// ── FORMAT ──
+function fmt(n, cur = '') {
+  if (n === '' || n === null || n === undefined) return '—';
+  const num = typeof n === 'number' ? n : parseFloat(n);
+  if (isNaN(num)) return n;
+  return (cur ? cur + ' ' : '') + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'block';
+  renderMetrics();
+  renderCharts();
+  renderPL();
+  renderBS();
+  renderTxnTable();
+  renderStaticInsights();
+}
+
+// ── METRICS ──
+function renderMetrics() {
+  const s = summary;
+  const sgdNet = s.sgdIncome - s.sgdExpenses;
+  const usdNet = s.usdIncome - s.usdExpenses;
+  document.getElementById('metrics-grid').innerHTML = `
+    <div class="metric"><div class="metric-label">SGD Income</div><div class="metric-value pos">${fmt(s.sgdIncome,'SGD')}</div><div class="metric-sub">Client deposits</div></div>
+    <div class="metric"><div class="metric-label">USD Income</div><div class="metric-value pos">${fmt(s.usdIncome,'USD')}</div><div class="metric-sub">Payins & deposits</div></div>
+    <div class="metric"><div class="metric-label">GBP Income</div><div class="metric-value pos">${fmt(s.gbpIncome,'GBP')}</div><div class="metric-sub">Client deposits</div></div>
+    <div class="metric"><div class="metric-label">SGD Net</div><div class="metric-value ${sgdNet>=0?'pos':'neg'}">${fmt(sgdNet,'SGD')}</div><div class="metric-sub">After operating expenses</div></div>
+    <div class="metric"><div class="metric-label">Total Transactions</div><div class="metric-value neu">${s.txnCount}</div><div class="metric-sub">${s.minDate} → ${s.maxDate}</div></div>
+    <div class="metric"><div class="metric-label">In Yield</div><div class="metric-value neu">${fmt(s.usdYield,'USD')}</div><div class="metric-sub">+ GBP ${fmt(s.gbpYield)}</div></div>
+  `;
+}
+
+// ── CHARTS ──
+let charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderCharts() {
+  const s = summary;
+  const months = Object.keys(s.byMonth).sort();
+  const COLORS = ['#1a5fbf','#0d9e72','#d44f2e','#c07f1a','#7c3aed','#0891b2'];
+
+  // Monthly income
+  destroyChart('monthly');
+  charts['monthly'] = new Chart(document.getElementById('chart-monthly'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'SGD', data: months.map(m => s.byMonth[m].sgd), backgroundColor: '#1a5fbf' },
+        { label: 'USD', data: months.map(m => s.byMonth[m].usd), backgroundColor: '#0d9e72' },
+        { label: 'GBP', data: months.map(m => s.byMonth[m].gbp), backgroundColor: '#c07f1a' },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f0f4f9' } } } }
+  });
+
+  // Expense breakdown
+  destroyChart('expenses');
+  const cats = Object.entries(s.byCategory).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  charts['expenses'] = new Chart(document.getElementById('chart-expenses'), {
+    type: 'doughnut',
+    data: { labels: cats.map(c=>c[0]), datasets: [{ data: cats.map(c=>c[1]), backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
+  });
+
+  // Clients
+  destroyChart('clients');
+  const clients = Object.entries(s.byClient).sort((a,b) => b[1]-a[1]).slice(0,6);
+  charts['clients'] = new Chart(document.getElementById('chart-clients'), {
+    type: 'bar',
+    data: { labels: clients.map(c=>c[0].substring(0,22)+'…'), datasets: [{ data: clients.map(c=>c[1]), backgroundColor: '#1a5fbf' }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#f0f4f9' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+  });
+
+  // Transaction types
+  destroyChart('types');
+  const typeCounts = {};
+  parsedTxns.forEach(t => { typeCounts[t.type] = (typeCounts[t.type]||0)+1; });
+  const typeEntries = Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]);
+  charts['types'] = new Chart(document.getElementById('chart-types'), {
+    type: 'doughnut',
+    data: { labels: typeEntries.map(e=>e[0]), datasets: [{ data: typeEntries.map(e=>e[1]), backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
+  });
+}
+
+// ── P&L TABLE ──
+function renderPL() {
+  const s = summary;
+  document.getElementById('pl-period').textContent = s.minDate + ' – ' + s.maxDate;
+
+  // Group income by client/source for SGD
+  const sgdClients = {};
+  const usdSources = {};
+  const gbpSources = {};
+  parsedTxns.forEach(t => {
+    if (!['Revenue – Payin','Revenue – Deposit','Card Refund'].includes(t.category)) return;
+    const clientMatch = t.desc.match(/^([^|]+)\s*\|/);
+    const label = clientMatch ? clientMatch[1].trim() : t.desc.substring(0, 50);
+    if (t.walletCur === 'SGD') sgdClients[label] = (sgdClients[label]||0) + t.credit;
+    if (t.walletCur === 'USD') usdSources[label] = (usdSources[label]||0) + t.credit;
+    if (t.walletCur === 'GBP') gbpSources[label] = (gbpSources[label]||0) + t.credit;
+  });
+
+  const staffUSD = {}, mktSGD = {}, softUSD = {}, otherUSD = {};
+  parsedTxns.forEach(t => {
+    if (t.category === 'Staff / Contractor') staffUSD[t.desc.substring(0,40)] = (staffUSD[t.desc.substring(0,40)]||0) + t.debit;
+    else if (t.category === 'Marketing') mktSGD[t.desc.substring(0,40)] = (mktSGD[t.desc.substring(0,40)]||0) + t.debit;
+    else if (t.category === 'Software & Tools') softUSD[t.desc.substring(0,40)] = (softUSD[t.desc.substring(0,40)]||0) + t.debit;
+    else if (t.category === 'Refund') otherUSD['Refund paid out'] = (otherUSD['Refund paid out']||0) + t.debit;
+    else if (t.category === 'Director Dividend') otherUSD['Director Dividend'] = (otherUSD['Director Dividend']||0) + t.debit;
+  });
+
+  const rows = [];
+  const addSection = (label) => rows.push({ type:'section', label });
+  const addRow = (label, cur, amt, cls='', note='') => rows.push({ type:'row', label, cur, amt, cls, note });
+  const addTotal = (label, cur, amt, cls='') => rows.push({ type:'total', label, cur, amt, cls });
+
+  addSection('REVENUE — SGD');
+  Object.entries(sgdClients).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => addRow(k,'SGD',v,'pos'));
+  addTotal('Total SGD Revenue','SGD',s.sgdIncome,'pos');
+
+  addSection('REVENUE — USD');
+  Object.entries(usdSources).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => addRow(k,'USD',v,'pos'));
+  addTotal('Total USD Revenue','USD',s.usdIncome,'pos');
+
+  if (s.gbpIncome > 0) {
+    addSection('REVENUE — GBP');
+    Object.entries(gbpSources).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => addRow(k,'GBP',v,'pos'));
+    addTotal('Total GBP Revenue','GBP',s.gbpIncome,'pos');
+  }
+
+  addSection('OPERATING EXPENSES — SGD');
+  Object.entries(mktSGD).forEach(([k,v]) => addRow(k,'SGD',v,'neg'));
+  addRow('SGD bank fees','SGD',s.totalFees.SGD||0,'neg');
+  addTotal('Total SGD Expenses','SGD',s.sgdExpenses + (s.totalFees.SGD||0),'neg');
+
+  addSection('OPERATING EXPENSES — USD');
+  Object.entries(staffUSD).forEach(([k,v]) => addRow(k,'USD',v,'neg'));
+  Object.entries(softUSD).forEach(([k,v]) => addRow(k,'USD',v,'neg'));
+  Object.entries(otherUSD).forEach(([k,v]) => addRow(k,'USD',v,'amb'));
+  addRow('USD bank/payin fees','USD',s.totalFees.USD||0,'neg');
+  addTotal('Total USD Expenses','USD',s.usdExpenses + (s.totalFees.USD||0),'neg');
+
+  addSection('NET POSITION (operating, excl. FX & yield)');
+  const sgdNet = s.sgdIncome - s.sgdExpenses - (s.totalFees.SGD||0);
+  const usdNet = s.usdIncome - s.usdExpenses - (s.totalFees.USD||0);
+  const gbpNet = s.gbpIncome - (s.totalFees.GBP||0);
+  addTotal('SGD Net','SGD',sgdNet, sgdNet>=0?'pos':'neg');
+  addTotal('USD Net (operating)','USD',usdNet, usdNet>=0?'pos':'neg');
+  if (s.gbpIncome > 0) addTotal('GBP Net','GBP',gbpNet, gbpNet>=0?'pos':'neg');
+
+  let html = '<thead><tr><th style="width:45%">Description</th><th>Currency</th><th class="num">Amount</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    if (r.type === 'section') {
+      html += `<tr class="section-row"><td colspan="3">${r.label}</td></tr>`;
+    } else if (r.type === 'total') {
+      html += `<tr class="total-row"><td><strong>${r.label}</strong></td><td><strong>${r.cur}</strong></td><td class="num ${r.cls}"><strong>${fmt(r.amt)}</strong></td></tr>`;
+    } else {
+      html += `<tr><td>${r.label}</td><td style="color:var(--ink-3);font-size:12px">${r.cur}</td><td class="num ${r.cls}">${fmt(r.amt)}</td></tr>`;
+    }
+  });
+  html += '</tbody>';
+  document.getElementById('pl-table').innerHTML = html;
+}
+
+// ── BALANCE SHEET ──
+function renderBS() {
+  const s = summary;
+  document.getElementById('bs-date').textContent = 'As of ' + s.maxDate;
+
+  const rows = [];
+  const addSection = l => rows.push({ type:'section', label:l });
+  const addRow = (l, cur, amt, cls='', note='') => rows.push({ type:'row', label:l, cur, amt, cls, note });
+  const addTotal = (l, cur, amt, cls='') => rows.push({ type:'total', label:l, cur, amt, cls });
+
+  addSection('ASSETS — CASH & LIQUID');
+  Object.entries(s.closingBal).forEach(([cur, bal]) => {
+    if (bal > 0) addRow(`${cur} wallet — closing balance`, cur, bal, 'pos');
+  });
+  if (s.usdYield > 0) addRow('USD Yield balance (parked)', 'USD', s.usdYield, 'pos');
+  if (s.gbpYield > 0) addRow('GBP Yield balance (parked)', 'GBP', s.gbpYield, 'pos');
+
+  addSection('LIABILITIES');
+  addRow('Formal liabilities identified', '—', '', '', 'None visible in this export');
+
+  // Recurring obligations
+  const staffTxns = parsedTxns.filter(t => t.category === 'Staff / Contractor');
+  if (staffTxns.length > 0) {
+    const last = staffTxns[staffTxns.length-1];
+    addRow('Est. recurring – contractor', last.walletCur, last.debit, 'amb', '/month approx.');
+  }
+  const mktTxns = parsedTxns.filter(t => t.category === 'Marketing');
+  if (mktTxns.length > 0) {
+    const last = mktTxns[mktTxns.length-1];
+    addRow('Est. recurring – marketing retainer', last.walletCur, last.debit, 'amb', '/month approx.');
+  }
+
+  addSection('ACTIVITY SUMMARY');
+  addRow('Total credits (all currencies)', '', '', '', `SGD ${fmt(s.sgdIncome)} + USD ${fmt(s.usdIncome)} + GBP ${fmt(s.gbpIncome)}`);
+  addRow('Total debits (operating only)', '', '', 'neg', `SGD ${fmt(s.sgdExpenses)} + USD ${fmt(s.usdExpenses)}`);
+  addRow('Yield parked (not spent)', 'USD', s.usdYield, 'pos');
+
+  let html = '<thead><tr><th style="width:45%">Item</th><th>Currency</th><th class="num">Amount</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    if (r.type === 'section') {
+      html += `<tr class="section-row"><td colspan="3">${r.label}</td></tr>`;
+    } else if (r.type === 'total') {
+      html += `<tr class="total-row"><td><strong>${r.label}</strong></td><td><strong>${r.cur}</strong></td><td class="num ${r.cls}"><strong>${fmt(r.amt)}</strong></td></tr>`;
+    } else {
+      const amtDisplay = typeof r.amt === 'number' && r.amt > 0 ? fmt(r.amt) : (r.note || '—');
+      html += `<tr><td>${r.label}</td><td style="color:var(--ink-3);font-size:12px">${r.cur}</td><td class="num ${r.cls}">${amtDisplay}</td></tr>`;
+    }
+  });
+  html += '</tbody>';
+  document.getElementById('bs-table').innerHTML = html;
+}
+
+// ── TRANSACTIONS TABLE ──
+function renderTxnTable() {
+  document.getElementById('txn-count').textContent = parsedTxns.length + ' transactions';
+  let html = '<thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Currency</th><th class="num">Debit</th><th class="num">Credit</th><th>Category</th></tr></thead><tbody>';
+  parsedTxns.forEach(t => {
+    const catClass = t.credit > 0 ? 'badge-green' : t.category === 'Bank Fee' ? 'badge-blue' : t.category.includes('Yield') || t.category.includes('FX') ? 'badge-amber' : 'badge-red';
+    html += `<tr>
+      <td style="white-space:nowrap">${t.date}</td>
+      <td style="font-size:11px;color:var(--ink-3)">${t.type}</td>
+      <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.desc}">${t.desc.substring(0,55)}${t.desc.length>55?'…':''}</td>
+      <td>${t.walletCur}</td>
+      <td class="num neg">${t.debit>0?fmt(t.debit):''}</td>
+      <td class="num pos">${t.credit>0?fmt(t.credit):''}</td>
+      <td><span class="badge ${catClass}">${t.category}</span></td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('txn-table').innerHTML = html;
+}
+
+// ── STATIC INSIGHTS ──
+function renderStaticInsights() {
+  const s = summary;
+  const insights = [];
+
+  // Top client
+  const topClients = Object.entries(s.byClient).sort((a,b)=>b[1]-a[1]);
+  if (topClients.length > 0) {
+    insights.push({ type:'good', label:'Top Revenue Client', finding: `${topClients[0][0]} — SGD ${fmt(topClients[0][1])}`, action: 'This is your anchor client. Maintain the relationship and understand their billing cycle.' });
+  }
+
+  // EasyToRefer
+  const easy = parsedTxns.filter(t => t.desc.toLowerCase().includes('easytorefer'));
+  if (easy.length >= 3) {
+    insights.push({ type:'flag', label:'Recurring Micro-charge', finding: `EasyToRefer charged ${easy.length}× at USD 5.00 each — verify billing cycle`, action: 'Log in to EasyToRefer and confirm if this is weekly billing. If underused, cancel.' });
+  }
+
+  // Yield
+  if (s.usdYield > 0) {
+    insights.push({ type:'good', label:'Yield Strategy', finding: `USD ${fmt(s.usdYield)} parked in yield balance — smart use of idle cash`, action: 'Confirm yield rate. Keep excess USD in yield and draw down as needed.' });
+  }
+
+  // Cambridge
+  const cambridge = parsedTxns.filter(t => t.desc.toLowerCase().includes('cambridge'));
+  if (cambridge.length > 0) {
+    const total = cambridge.reduce((a,t) => a+t.debit, 0);
+    insights.push({ type:'note', label:'Largest Expense', finding: `Cambridge Consolidated — SGD ${fmt(total)} total marketing spend`, action: 'Track marketing ROI monthly. Tie spend to client acquisition numbers.' });
+  }
+
+  // USD income gap
+  if (s.usdIncome < s.usdExpenses) {
+    insights.push({ type:'flag', label:'USD Income Gap', finding: `USD income (${fmt(s.usdIncome)}) < USD expenses (${fmt(s.usdExpenses)})`, action: 'USD wallet relies on SGD→USD FX conversions to fund operations. Monitor FX timing.' });
+  }
+
+  // Dividend
+  const div = parsedTxns.find(t => t.category === 'Director Dividend');
+  if (div) {
+    insights.push({ type:'note', label:'Director Dividend', finding: `USD ${fmt(div.debit)} director dividend paid — ${div.date}`, action: 'Confirm tax treatment with your accountant. Not an operating expense.' });
+  }
+
+  let html = '';
+  insights.forEach(i => {
+    html += `<div class="insight-item ${i.type}"><div class="insight-label">${i.label}</div><div class="insight-finding">${i.finding}</div><div class="insight-action">→ ${i.action}</div></div>`;
+  });
+  document.getElementById('static-insights').innerHTML = html;
+}
+
+// ── AI INSIGHTS ──
+async function generateInsights() {
+  const apiKey = localStorage.getItem('aw_api_key');
+  if (!apiKey) {
+    openSettings();
+    return;
+  }
+
+  const btn = document.getElementById('ai-btn');
+  const out = document.getElementById('ai-output');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Analyzing with Claude…';
+  out.innerHTML = '<div class="loading-bar"><div class="spinner"></div>Reading transactions and generating CFO-level analysis…</div>';
+
+  // Build a compact summary for the API
+  const s = summary;
+  const topClients = Object.entries(s.byClient).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k}: SGD ${fmt(v)}`).join(', ');
+  const expCats = Object.entries(s.byCategory).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${fmt(v)}`).join(', ');
+  const months = Object.keys(s.byMonth).sort();
+  const monthlyStr = months.map(m => `${m}: SGD ${fmt(s.byMonth[m].sgd)}, USD ${fmt(s.byMonth[m].usd)}, expenses ~${fmt(s.byMonth[m].expenses)}`).join('\n');
+
+  const prompt = `You are a CFO advisor reviewing Airwallex multi-currency business account data for a Singapore-based digital marketing agency.
+
+PERIOD: ${s.minDate} to ${s.maxDate}
+TOTAL TRANSACTIONS: ${s.txnCount}
+
+REVENUE:
+- SGD income: ${fmt(s.sgdIncome)} (client deposits)
+- USD income: ${fmt(s.usdIncome)} (payin settlements + deposits)
+- GBP income: ${fmt(s.gbpIncome)} (client deposits)
+
+TOP SGD CLIENTS: ${topClients}
+
+MONTHLY BREAKDOWN:
+${monthlyStr}
+
+EXPENSES (by category): ${expCats}
+
+YIELD PARKED: USD ${fmt(s.usdYield)}, GBP ${fmt(s.gbpYield)}
+
+CLOSING BALANCES: ${Object.entries(s.closingBal).map(([c,b])=>`${c} ${fmt(b)}`).join(', ')}
+
+Please provide a concise CFO-level analysis with:
+1. KEY OBSERVATIONS (3–4 points about revenue trends, client concentration, expense patterns)
+2. EXPENSE ANALYSIS (what's consuming the most cash and whether it's justified)
+3. CASH FLOW HEALTH (overall position assessment)
+4. RED FLAGS (anything unusual or worth investigating)
+5. TOP 3 RECOMMENDATIONS (specific, actionable steps this month)
+
+Be direct, specific, and reference actual figures. Plain text, no markdown symbols.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content[0].text;
+    out.innerHTML = `<div class="ai-block"><div class="ai-label">✦ Claude AI Analysis</div>${text}</div>`;
+  } catch (e) {
+    out.innerHTML = `<div class="insight-item flag"><div class="insight-label">Error</div><div class="insight-finding">${e.message}</div><div class="insight-action">→ Check your API key in Settings and try again.</div></div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#5b9cf6" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="#5b9cf6" stroke-width="1.5" stroke-linecap="round"/></svg> Regenerate analysis';
+}
+
+// ── TABS ──
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['overview','pl','balance','transactions','insights'][i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+</body>
+</html>
