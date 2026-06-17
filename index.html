@@ -233,11 +233,48 @@
 
   <!-- UPLOAD -->
   <section id="upload-section">
-    <div class="upload-card" id="drop-zone" onclick="document.getElementById('file-input').click()">
-      <input type="file" id="file-input" accept=".csv">
-      <div class="upload-icon">📂</div>
-      <div class="upload-title">Drop your Airwallex CSV here</div>
-      <div class="upload-sub">or <a onclick="event.stopPropagation();document.getElementById('file-input').click()">browse to upload</a> &nbsp;·&nbsp; Supports Airwallex Balance Activity export</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+      <!-- CSV Upload -->
+      <div class="upload-card" id="drop-zone" onclick="document.getElementById('file-input').click()" style="padding:32px 20px">
+        <input type="file" id="file-input" accept=".csv">
+        <div class="upload-icon">📊</div>
+        <div class="upload-title" style="font-size:14px">Balance Activity CSV</div>
+        <div class="upload-sub">Airwallex → Transactions → Export CSV</div>
+        <div style="margin-top:10px;font-size:11px;background:var(--blue-light);color:var(--blue);padding:5px 10px;border-radius:6px;display:inline-block">Transaction-level detail</div>
+      </div>
+
+      <!-- PDF Upload -->
+      <div class="upload-card" id="pdf-drop-zone" onclick="document.getElementById('pdf-input').click()" style="padding:32px 20px;border-color:var(--green)">
+        <input type="file" id="pdf-input" accept=".pdf" multiple>
+        <div class="upload-icon">📋</div>
+        <div class="upload-title" style="font-size:14px">Account Statement PDFs</div>
+        <div class="upload-sub">Airwallex → Statements → Download ASR PDF</div>
+        <div style="margin-top:10px;font-size:11px;background:var(--green-light);color:var(--green);padding:5px 10px;border-radius:6px;display:inline-block">✓ Official opening &amp; closing balances</div>
+      </div>
+    </div>
+
+    <!-- Yield Override + PDF status -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:6px">Actual Yield Balance (optional override)</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:12px;color:var(--ink-2);white-space:nowrap">USD Yield:</label>
+            <input type="number" id="yield-usd" placeholder="e.g. 155000" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--ink)">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:12px;color:var(--ink-2);white-space:nowrap">GBP Yield:</label>
+            <input type="number" id="yield-gbp" placeholder="e.g. 15000" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--ink)">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--ink-3);margin-top:4px">Enter your actual Airwallex Yield balance — overrides the CSV-counted figure</div>
+      </div>
+      <div id="pdf-status" style="font-size:12px;color:var(--ink-3);flex:1;min-width:160px;text-align:right"></div>
+    </div>
+
+    <div style="margin-top:12px;text-align:center">
+      <div style="font-size:12px;color:var(--ink-3)">Upload the CSV first for full transaction detail — PDFs provide official opening/closing balances</div>
     </div>
   </section>
 
@@ -344,6 +381,7 @@
 // ── STATE ──
 let parsedTxns = [];
 let summary = {};
+let pdfBalances = {}; // official balances from PDF ASR statements
 
 // ── SETTINGS ──
 function openSettings() {
@@ -359,7 +397,7 @@ function saveSettings() {
   alert('API key saved.');
 }
 
-// ── FILE UPLOAD ──
+// ── CSV FILE UPLOAD ──
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
@@ -372,6 +410,68 @@ function handleFile(file) {
   const reader = new FileReader();
   reader.onload = e => processCSV(e.target.result);
   reader.readAsText(file);
+}
+
+// ── PDF UPLOAD ──
+const pdfDropZone = document.getElementById('pdf-drop-zone');
+const pdfInput = document.getElementById('pdf-input');
+pdfDropZone.addEventListener('dragover', e => { e.preventDefault(); pdfDropZone.classList.add('drag'); });
+pdfDropZone.addEventListener('dragleave', () => pdfDropZone.classList.remove('drag'));
+pdfDropZone.addEventListener('drop', e => { e.preventDefault(); pdfDropZone.classList.remove('drag'); handlePDFs(e.dataTransfer.files); });
+pdfInput.addEventListener('change', e => handlePDFs(e.target.files));
+
+function handlePDFs(files) {
+  if (!files || files.length === 0) return;
+  const apiKey = localStorage.getItem('aw_api_key');
+  if (!apiKey) { openSettings(); return; }
+  
+  const status = document.getElementById('pdf-status');
+  status.textContent = `Processing ${files.length} PDF(s)…`;
+  pdfBalances = {};
+  
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      const b64 = e.target.result.split(',')[1];
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 1000,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+                { type: 'text', text: 'Extract from this Airwallex Account Statement Report: the currency (AUD/USD/SGD/GBP), starting balance, ending balance, total collections/additions, and total payouts/subtractions. Respond ONLY with valid JSON like: {"currency":"USD","opening":17500.39,"closing":12407.24,"total_in":102227.96,"total_out":107321.11,"period_start":"2026-01-01","period_end":"2026-06-17"}' }
+              ]
+            }]
+          })
+        });
+        const data = await res.json();
+        const text = data.content[0].text.replace(/```json|```/g,'').trim();
+        const parsed = JSON.parse(text);
+        pdfBalances[parsed.currency] = parsed;
+        
+        const currencies = Object.keys(pdfBalances).join(', ');
+        status.innerHTML = `<span style="color:var(--green)">✓ PDF balances loaded: ${currencies}</span>`;
+        
+        // If CSV already loaded, refresh balance sheet with official figures
+        if (parsedTxns.length > 0) { buildSummary(); renderBS(); renderMetrics(); }
+      } catch(err) {
+        status.innerHTML = `<span style="color:var(--red)">PDF parse error: ${err.message}</span>`;
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── YIELD OVERRIDE ──
+function getYieldOverride() {
+  const usd = parseFloat(document.getElementById('yield-usd').value) || null;
+  const gbp = parseFloat(document.getElementById('yield-gbp').value) || null;
+  return { usd, gbp };
 }
 
 // ── CSV PARSER ──
@@ -505,6 +605,20 @@ function buildSummary() {
   // Pull opening balances computed during parsing
   s.openingBal = parsedTxns._openingBal || {};
 
+  // ── Override with official PDF balances if available ──
+  Object.entries(pdfBalances).forEach(([cur, data]) => {
+    s.openingBal[cur] = { opening: data.opening, firstDate: data.period_start };
+    s.closingBal[cur] = data.closing;
+    // Store official totals for balance sheet
+    if (!s.officialTotals) s.officialTotals = {};
+    s.officialTotals[cur] = { total_in: data.total_in, total_out: data.total_out, period_end: data.period_end };
+  });
+
+  // ── Apply yield override if provided ──
+  const yieldOverride = getYieldOverride();
+  if (yieldOverride.usd !== null) s.usdYield = yieldOverride.usd;
+  if (yieldOverride.gbp !== null) s.gbpYield = yieldOverride.gbp;
+
   summary = s;
 }
 
@@ -528,18 +642,23 @@ function renderAll() {
   renderStaticInsights();
 }
 
-// ── METRICS ──
 function renderMetrics() {
   const s = summary;
   const sgdNet = s.sgdIncome - s.sgdExpenses;
   const usdNet = s.usdIncome - s.usdExpenses;
+  const hasPdf = Object.keys(pdfBalances).length > 0;
+  const pdfBadge = hasPdf ? ' <span style="font-size:10px;background:var(--green-light);color:var(--green);padding:1px 6px;border-radius:99px;font-weight:600;vertical-align:middle">✓ ASR</span>' : '';
+  const yieldOverride = getYieldOverride();
+  const usdYieldDisplay = yieldOverride.usd !== null ? yieldOverride.usd : s.usdYield;
+  const gbpYieldDisplay = yieldOverride.gbp !== null ? yieldOverride.gbp : s.gbpYield;
+  const yieldNote = yieldOverride.usd !== null ? 'Manual override' : (hasPdf ? 'From CSV transfers' : 'From CSV transfers');
   document.getElementById('metrics-grid').innerHTML = `
-    <div class="metric"><div class="metric-label">SGD Income</div><div class="metric-value pos">${fmt(s.sgdIncome,'SGD')}</div><div class="metric-sub">Client deposits</div></div>
+    <div class="metric"><div class="metric-label">SGD Income${pdfBadge}</div><div class="metric-value pos">${fmt(s.sgdIncome,'SGD')}</div><div class="metric-sub">Client deposits</div></div>
     <div class="metric"><div class="metric-label">USD Income</div><div class="metric-value pos">${fmt(s.usdIncome,'USD')}</div><div class="metric-sub">Payins & deposits</div></div>
     <div class="metric"><div class="metric-label">GBP Income</div><div class="metric-value pos">${fmt(s.gbpIncome,'GBP')}</div><div class="metric-sub">Client deposits</div></div>
     <div class="metric"><div class="metric-label">SGD Net</div><div class="metric-value ${sgdNet>=0?'pos':'neg'}">${fmt(sgdNet,'SGD')}</div><div class="metric-sub">After operating expenses</div></div>
     <div class="metric"><div class="metric-label">Total Transactions</div><div class="metric-value neu">${s.txnCount}</div><div class="metric-sub">${s.minDate} → ${s.maxDate}</div></div>
-    <div class="metric"><div class="metric-label">In Yield</div><div class="metric-value neu">${fmt(s.usdYield,'USD')}</div><div class="metric-sub">+ GBP ${fmt(s.gbpYield)}</div></div>
+    <div class="metric"><div class="metric-label">In Yield</div><div class="metric-value neu">${fmt(usdYieldDisplay,'USD')}</div><div class="metric-sub">${yieldNote} · GBP ${fmt(gbpYieldDisplay)}</div></div>
   `;
 }
 
@@ -684,10 +803,19 @@ function renderBS() {
 
   // ── Per-currency totals of credits and debits ──
   const curCredits = {}, curDebits = {};
+  // Use official PDF totals if available, else sum from transactions
+  const hasPdf = Object.keys(pdfBalances).length > 0;
   parsedTxns.forEach(t => {
     if (t.credit > 0) curCredits[t.walletCur] = (curCredits[t.walletCur] || 0) + t.credit;
     if (t.debit  > 0) curDebits[t.walletCur]  = (curDebits[t.walletCur]  || 0) + t.debit;
   });
+  // Override with official PDF figures
+  if (s.officialTotals) {
+    Object.entries(s.officialTotals).forEach(([cur, data]) => {
+      curCredits[cur] = data.total_in;
+      curDebits[cur] = data.total_out;
+    });
+  }
 
   const rows = [];
   const addSection = l          => rows.push({ type:'section', label:l });
@@ -711,11 +839,15 @@ function renderBS() {
   });
 
   // ── SECTION 2: YIELD ──
-  if (s.usdYield > 0 || s.gbpYield > 0) {
+  const yieldOverride = getYieldOverride();
+  const usdYieldDisplay = yieldOverride.usd !== null ? yieldOverride.usd : s.usdYield;
+  const gbpYieldDisplay = yieldOverride.gbp !== null ? yieldOverride.gbp : s.gbpYield;
+  const yieldNote = yieldOverride.usd !== null ? 'Manual override — actual Airwallex Yield balance' : 'Counted from CSV transfers only';
+  if (usdYieldDisplay > 0 || gbpYieldDisplay > 0) {
     addSection('YIELD BALANCES (parked, earning interest)');
-    if (s.usdYield > 0) addRow('USD Yield balance', 'USD', s.usdYield, 'pos', 'Company funds — not spent');
-    if (s.gbpYield > 0) addRow('GBP Yield balance', 'GBP', s.gbpYield, 'pos', 'Company funds — not spent');
-    const totalYield = s.usdYield + (s.gbpYield * 1.27); // rough USD equiv
+    if (usdYieldDisplay > 0) addRow('USD Yield balance', 'USD', usdYieldDisplay, 'pos', yieldNote);
+    if (gbpYieldDisplay > 0) addRow('GBP Yield balance', 'GBP', gbpYieldDisplay, 'pos', 'Company funds — not spent');
+    const totalYield = usdYieldDisplay + (gbpYieldDisplay * 1.27);
     addRow('Approx. combined yield (USD equiv.)', 'USD', Math.round(totalYield), 'pos', 'GBP converted at ~1.27 for reference only');
   }
 
