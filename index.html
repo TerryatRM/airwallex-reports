@@ -16,7 +16,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 
 .main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
 
-/* ERROR / LOADING */
+/* NOTICE */
 .notice { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 48px 32px; text-align: center; margin-bottom: 24px; }
 .notice-icon { font-size: 36px; margin-bottom: 12px; }
 .notice-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
@@ -26,12 +26,19 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* METRICS */
-.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 14px; margin-bottom: 24px; }
 .metric { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 16px 18px; }
 .metric-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6b7f94; margin-bottom: 8px; }
 .metric-value { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
 .metric-sub { font-size: 11px; color: #9aabbc; margin-top: 3px; }
 .pos { color: #0d9e72; } .neg { color: #d44f2e; } .neu { color: #1a2b45; }
+
+/* TABS */
+.tabs { display: flex; gap: 3px; background: #e2e8f0; border-radius: 10px; padding: 3px; width: fit-content; margin-bottom: 24px; }
+.tab { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: #6b7f94; background: none; border: none; transition: all 0.12s; white-space: nowrap; }
+.tab.active { background: #fff; color: #1a2b45; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 /* CURRENCY BLOCKS */
 .cur-block { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 24px; overflow: hidden; }
@@ -41,19 +48,14 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 .bal { text-align: right; }
 .bal-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7f94; margin-bottom: 2px; }
 .bal-val { font-size: 15px; font-weight: 700; }
-
 .net-strip { padding: 9px 22px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-.net-strip.pos-bg { background: #f0faf6; }
-.net-strip.neg-bg { background: #fef4f1; }
-
+.net-strip.pos-bg { background: #f0faf6; } .net-strip.neg-bg { background: #fef4f1; }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; }
 @media(max-width:640px) { .two-col { grid-template-columns: 1fr; } }
 .col-panel { padding: 18px 22px; }
 .col-panel:first-child { border-right: 1px solid #e2e8f0; }
 .col-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; padding-bottom: 10px; border-bottom: 2px solid; margin-bottom: 12px; display: flex; justify-content: space-between; }
-.col-head.inc { color: #0d9e72; border-color: #0d9e72; }
-.col-head.exp { color: #d44f2e; border-color: #d44f2e; }
-
+.col-head.inc { color: #0d9e72; border-color: #0d9e72; } .col-head.exp { color: #d44f2e; border-color: #d44f2e; }
 .txn { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid #f0f4f9; gap: 10px; }
 .txn:last-child { border-bottom: none; }
 .txn-left { flex: 1; min-width: 0; }
@@ -62,11 +64,9 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 .txn-cat { font-size: 10px; color: #b0bfcc; }
 .txn-amt { font-size: 13px; font-weight: 600; white-space: nowrap; }
 .txn-amt.c { color: #0d9e72; } .txn-amt.d { color: #d44f2e; }
-
-.cur-footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 22px; display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; }
+.cur-footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 22px; display: flex; gap: 24px; flex-wrap: wrap; }
 .foot-item .foot-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9aabbc; margin-bottom: 2px; }
-.foot-item .foot-val { font-weight: 700; }
-
+.foot-item .foot-val { font-size: 13px; font-weight: 700; }
 .empty { font-size: 12px; color: #b0bfcc; padding: 8px 0; }
 
 /* CHARTS */
@@ -76,6 +76,32 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 .chart-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7f94; margin-bottom: 14px; }
 .chart-wrap { height: 200px; position: relative; }
 
+/* P&L TABLE */
+.pl-card { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 20px; overflow: hidden; }
+.pl-card-title { padding: 14px 22px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+.pl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pl-table th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7f94; padding: 8px 22px; text-align: left; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.pl-table th:not(:first-child) { text-align: right; }
+.pl-table td { padding: 8px 22px; border-bottom: 1px solid #f0f4f9; }
+.pl-table td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+.pl-table tr:last-child td { border-bottom: none; }
+.pl-table tr:hover td { background: #fafbfc; }
+.pl-sec td { background: #f0f4f9 !important; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #3a4a5c; padding: 6px 22px; }
+.pl-total td { background: #e8f0fd !important; font-weight: 700; border-top: 1px solid #c8d4e0 !important; }
+.pl-net td { background: #0f1923 !important; color: #fff !important; font-weight: 700; font-size: 14px; }
+
+/* INSIGHTS */
+.insight-card { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 16px; overflow: hidden; }
+.insight-card .ic-header { padding: 14px 20px; font-weight: 700; font-size: 13px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 8px; }
+.insight-card .ic-body { padding: 14px 20px; font-size: 13px; color: #3a4a5c; line-height: 1.7; }
+.insight-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f0f4f9; gap: 16px; }
+.insight-row:last-child { border-bottom: none; }
+.insight-label { color: #1a2b45; font-weight: 500; }
+.insight-action { font-size: 12px; color: #6b7f94; margin-top: 2px; }
+.insight-val { font-weight: 700; white-space: nowrap; }
+.flag-red { border-left: 3px solid #d44f2e; padding-left: 12px; }
+.flag-green { border-left: 3px solid #0d9e72; padding-left: 12px; }
+.flag-amber { border-left: 3px solid #c07f1a; padding-left: 12px; }
 .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6b7f94; margin-bottom: 14px; margin-top: 8px; }
 </style>
 </head>
@@ -101,26 +127,20 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 
 <script>
 const CSV_URL = 'transactions.csv';
-
-const CUR_FLAGS = { USD:'🇺🇸', SGD:'🇸🇬', GBP:'🇬🇧', AUD:'🇦🇺', EUR:'🇪🇺', HKD:'🇭🇰', MYR:'🇲🇾' };
+const CUR_FLAGS = { USD:'🇺🇸', SGD:'🇸🇬', GBP:'🇬🇧', AUD:'🇦🇺', EUR:'🇪🇺', HKD:'🇭🇰' };
 const CUR_COLOR = { USD:'#1a5fbf', SGD:'#0d9e72', GBP:'#c07f1a', AUD:'#d44f2e', EUR:'#7c3aed', HKD:'#0891b2' };
 
 function fmt(n) {
   if (n === null || n === undefined || isNaN(n)) return '—';
-  return Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return Math.abs(n).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
 }
 
-// ── FETCH & PARSE CSV ──
 async function loadCSV() {
   try {
     const res = await fetch(CSV_URL + '?v=' + Date.now());
-    if (!res.ok) throw new Error('File not found');
-    const text = await res.text();
-    return parseCSV(text);
-  } catch(e) {
-    showError();
-    return null;
-  }
+    if (!res.ok) throw new Error('not found');
+    return parseCSV(await res.text());
+  } catch(e) { showError(); return null; }
 }
 
 function showError() {
@@ -132,7 +152,7 @@ function showError() {
       <div class="notice-sub">
         Upload your Airwallex CSV export to this GitHub repository as <code>transactions.csv</code><br><br>
         In Airwallex: <strong>Transactions → Export → CSV</strong><br>
-        Then in GitHub: <strong>Add file → Upload files → commit</strong>
+        In GitHub: <strong>Add file → Upload files</strong> → rename to <code>transactions.csv</code> → commit
       </div>
     </div>`;
 }
@@ -141,244 +161,333 @@ function parseCSV(text) {
   const lines = text.trim().split('\n');
   if (lines.length < 2) return [];
   const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,'').toLowerCase());
-
   const idx = name => headers.findIndex(h => h.includes(name.toLowerCase()));
-  const iTime = idx('time'), iType = idx('type'), iFinType = idx('financial transaction'),
-        iDesc = idx('description'), iWalletCur = idx('wallet currency'),
-        iAmt = idx('amount'), iDebit = idx('debit net'), iCredit = idx('credit net'),
-        iBal = idx('account balance');
+  const iTime=idx('time'), iType=idx('type'), iFinType=idx('financial transaction'),
+        iDesc=idx('description'), iWalletCur=idx('wallet currency'),
+        iDebit=idx('debit net'), iCredit=idx('credit net'), iBal=idx('account balance');
 
   const txns = [];
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
-    const cols = [];
-    let inQ = false, cur = '';
-    for (const ch of lines[i] + ',') {
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else cur += ch;
+    const cols=[]; let inQ=false, cur='';
+    for (const ch of lines[i]+',') {
+      if (ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+      else cur+=ch;
     }
-    const g = j => j >= 0 ? (cols[j]||'').replace(/^"|"$/g,'').replace(/,/g,'').trim() : '';
-    const gn = j => parseFloat(g(j)) || 0;
+    const g = j => j>=0?(cols[j]||'').replace(/^"|"$/g,'').replace(/,/g,'').trim():'';
+    const gn = j => parseFloat(g(j))||0;
+    const dateStr=g(iTime).split('T')[0], month=dateStr.substring(0,7);
+    const type=g(iType), finType=g(iFinType), desc=g(iDesc), walletCur=g(iWalletCur);
+    const debit=gn(iDebit), credit=gn(iCredit), balance=gn(iBal);
+    if (!dateStr||!walletCur) continue;
 
-    const dateStr = g(iTime).split('T')[0];
-    const month = dateStr.substring(0,7);
-    const type = g(iType);
-    const finType = g(iFinType);
-    const desc = g(iDesc);
-    const walletCur = g(iWalletCur);
-    const amount = gn(iAmt);
-    const debit = gn(iDebit);
-    const credit = gn(iCredit);
-    const balance = gn(iBal);
+    let category='Other';
+    const dl=desc.toLowerCase();
+    if(type==='FEE') category='Bank Fee';
+    else if(type==='YIELD') category='Yield Transfer';
+    else if(type==='CONVERSION') category='FX Conversion';
+    else if(finType.includes('PAYIN')||type==='PAYIN') category='Revenue – Payin';
+    else if(type==='DEPOSIT') category='Revenue – Deposit';
+    else if(dl.includes('cambridge')) category='Marketing';
+    else if(dl.includes('ana liza')||dl.includes('gajete')||dl.includes('lennard')) category='Staff / Contractor';
+    else if(dl.includes('dividend')||dl.includes('terence tam')) category='Director Dividend';
+    else if(type==='CARD'&&credit>0) category='Card Refund';
+    else if(type==='CARD') category='Software & Tools';
+    else if(type==='PAYOUT') category='Payout';
 
-    if (!dateStr || !walletCur) continue;
-
-    // Categorise
-    let category = 'Other';
-    const dl = desc.toLowerCase();
-    if (type === 'FEE') category = 'Bank Fee';
-    else if (type === 'YIELD') category = 'Yield Transfer';
-    else if (type === 'CONVERSION') category = 'FX Conversion';
-    else if (finType.includes('PAYIN') || type === 'PAYIN') category = 'Revenue – Payin';
-    else if (type === 'DEPOSIT') category = 'Revenue – Deposit';
-    else if (dl.includes('cambridge')) category = 'Marketing';
-    else if (dl.includes('ana liza') || dl.includes('gajete') || dl.includes('lennard')) category = 'Staff / Contractor';
-    else if (dl.includes('dividend') || dl.includes('terence tam')) category = 'Director Dividend';
-    else if (type === 'CARD' && credit > 0) category = 'Card Refund';
-    else if (type === 'CARD') category = 'Software & Tools';
-    else if (type === 'PAYOUT') category = 'Payout';
-
-    txns.push({ date: dateStr, month, type, finType, desc, walletCur, amount, debit, credit, balance, category });
+    txns.push({date:dateStr,month,type,finType,desc,walletCur,debit,credit,balance,category});
   }
 
-  // Compute opening balances
-  const firstSeen = {};
-  txns.forEach(t => {
-    if (t.balance > 0 && !firstSeen[t.walletCur]) {
-      firstSeen[t.walletCur] = { opening: t.balance - t.credit + t.debit, date: t.date };
-    }
+  const firstSeen={};
+  txns.forEach(t=>{
+    if(t.balance>0&&!firstSeen[t.walletCur])
+      firstSeen[t.walletCur]={opening:t.balance-t.credit+t.debit};
   });
-  txns._openingBal = firstSeen;
+  txns._openingBal=firstSeen;
   return txns;
 }
 
 function buildData(txns) {
-  const currencies = [...new Set(txns.map(t => t.walletCur))].sort();
-  const minDate = txns.reduce((a,t) => (!a || t.date < a) ? t.date : a, '');
-  const maxDate = txns.reduce((a,t) => (!a || t.date > a) ? t.date : a, '');
-  const openingBal = txns._openingBal || {};
+  const currencies=[...new Set(txns.map(t=>t.walletCur))].sort();
+  const minDate=txns.reduce((a,t)=>(!a||t.date<a)?t.date:a,'');
+  const maxDate=txns.reduce((a,t)=>(!a||t.date>a)?t.date:a,'');
+  const openingBal=txns._openingBal||{};
+  const closingBal={};
+  txns.forEach(t=>{ if(t.balance>0) closingBal[t.walletCur]=t.balance; });
 
-  const closingBal = {};
-  txns.forEach(t => { if (t.balance > 0) closingBal[t.walletCur] = t.balance; });
-
-  // Per currency income & expense lists
-  const byOCurrency = {};
-  currencies.forEach(cur => {
-    const curTxns = txns.filter(t => t.walletCur === cur);
-    const incomeTypes = ['Revenue – Payin','Revenue – Deposit','Card Refund'];
-    const income = curTxns.filter(t => t.credit > 0 && !['Yield Transfer','FX Conversion'].includes(t.category));
-    const expenses = curTxns.filter(t => t.debit > 0 && !['Yield Transfer','FX Conversion'].includes(t.category));
-    byOCurrency[cur] = { income, expenses };
+  const byCur={};
+  currencies.forEach(cur=>{
+    const ct=txns.filter(t=>t.walletCur===cur);
+    const noFX=t=>!['Yield Transfer','FX Conversion'].includes(t.category);
+    byCur[cur]={
+      income: ct.filter(t=>t.credit>0&&noFX(t)),
+      expenses: ct.filter(t=>t.debit>0&&noFX(t)),
+      all: ct
+    };
   });
+  return {currencies,minDate,maxDate,openingBal,closingBal,byCur,txns};
+}
 
-  return { currencies, minDate, maxDate, openingBal, closingBal, byOCurrency, txns };
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab-'+name));
 }
 
 function render(data) {
-  const { currencies, minDate, maxDate, openingBal, closingBal, byOCurrency, txns } = data;
+  const {currencies,minDate,maxDate,openingBal,closingBal,byCur,txns}=data;
+  document.getElementById('period-badge').textContent=`${minDate} → ${maxDate}`;
 
-  document.getElementById('period-badge').textContent = `${minDate} → ${maxDate}`;
+  // ── TOTALS ──
+  const sgdInc=txns.filter(t=>t.walletCur==='SGD'&&t.credit>0&&t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
+  const usdInc=txns.filter(t=>t.walletCur==='USD'&&t.credit>0&&t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
+  const gbpInc=txns.filter(t=>t.walletCur==='GBP'&&t.credit>0&&t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
+  const sgdExp=txns.filter(t=>t.walletCur==='SGD'&&t.debit>0&&!['Yield Transfer','FX Conversion'].includes(t.category)).reduce((a,t)=>a+t.debit,0);
+  const usdExp=txns.filter(t=>t.walletCur==='USD'&&t.debit>0&&!['Yield Transfer','FX Conversion'].includes(t.category)).reduce((a,t)=>a+t.debit,0);
+  const usdYield=txns.filter(t=>t.walletCur==='USD'&&t.category==='Yield Transfer').reduce((a,t)=>a+t.debit,0);
 
-  let html = '';
-
-  // ── SUMMARY METRICS ──
-  const sgdIncome = txns.filter(t => t.walletCur==='SGD' && t.credit>0 && t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
-  const usdIncome = txns.filter(t => t.walletCur==='USD' && t.credit>0 && t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
-  const gbpIncome = txns.filter(t => t.walletCur==='GBP' && t.credit>0 && t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
-  const sgdExp = txns.filter(t => t.walletCur==='SGD' && t.debit>0 && !['Yield Transfer','FX Conversion'].includes(t.category)).reduce((a,t)=>a+t.debit,0);
-  const usdExp = txns.filter(t => t.walletCur==='USD' && t.debit>0 && !['Yield Transfer','FX Conversion'].includes(t.category)).reduce((a,t)=>a+t.debit,0);
-  const usdYield = txns.filter(t => t.walletCur==='USD' && t.category==='Yield Transfer').reduce((a,t)=>a+t.debit,0);
-
-  html += `<div class="metrics-grid">
-    <div class="metric"><div class="metric-label">SGD Income</div><div class="metric-value pos">SGD ${fmt(sgdIncome)}</div><div class="metric-sub">Client deposits</div></div>
-    <div class="metric"><div class="metric-label">USD Income</div><div class="metric-value pos">USD ${fmt(usdIncome)}</div><div class="metric-sub">Payins & deposits</div></div>
-    <div class="metric"><div class="metric-label">GBP Income</div><div class="metric-value pos">GBP ${fmt(gbpIncome)}</div><div class="metric-sub">Client deposits</div></div>
-    <div class="metric"><div class="metric-label">SGD Net</div><div class="metric-value ${sgdIncome-sgdExp>=0?'pos':'neg'}">SGD ${fmt(sgdIncome-sgdExp)}</div><div class="metric-sub">After expenses</div></div>
-    <div class="metric"><div class="metric-label">USD Net</div><div class="metric-value ${usdIncome-usdExp>=0?'pos':'neg'}">USD ${fmt(usdIncome-usdExp)}</div><div class="metric-sub">Excl. FX & yield</div></div>
+  // ── METRICS ──
+  const metricsHtml=`<div class="metrics-grid">
+    <div class="metric"><div class="metric-label">SGD Income</div><div class="metric-value pos">SGD ${fmt(sgdInc)}</div><div class="metric-sub">Client deposits</div></div>
+    <div class="metric"><div class="metric-label">USD Income</div><div class="metric-value pos">USD ${fmt(usdInc)}</div><div class="metric-sub">Payins & deposits</div></div>
+    <div class="metric"><div class="metric-label">GBP Income</div><div class="metric-value pos">GBP ${fmt(gbpInc)}</div><div class="metric-sub">Client deposits</div></div>
+    <div class="metric"><div class="metric-label">SGD Net</div><div class="metric-value ${sgdInc-sgdExp>=0?'pos':'neg'}">SGD ${fmt(sgdInc-sgdExp)}</div><div class="metric-sub">After expenses</div></div>
+    <div class="metric"><div class="metric-label">USD Net</div><div class="metric-value ${usdInc-usdExp>=0?'pos':'neg'}">USD ${fmt(usdInc-usdExp)}</div><div class="metric-sub">Excl. FX & yield</div></div>
     <div class="metric"><div class="metric-label">In Yield</div><div class="metric-value neu">USD ${fmt(usdYield)}</div><div class="metric-sub">Parked, earning interest</div></div>
   </div>`;
 
-  // ── CHARTS ──
-  html += `<div class="charts-row">
-    <div class="chart-card"><div class="chart-title">Income by Month</div><div class="chart-wrap"><canvas id="chart-monthly"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Expense Breakdown (USD)</div><div class="chart-wrap"><canvas id="chart-exp"></canvas></div></div>
+  // ── TABS ──
+  const tabsHtml=`<div class="tabs">
+    <button class="tab active" data-tab="overview" onclick="showTab('overview')">Overview</button>
+    <button class="tab" data-tab="details" onclick="showTab('details')">Income & Expenses</button>
+    <button class="tab" data-tab="pl" onclick="showTab('pl')">P&amp;L</button>
+    <button class="tab" data-tab="insights" onclick="showTab('insights')">Insights</button>
   </div>`;
 
-  // ── PER-CURRENCY BLOCKS ──
-  html += `<div class="section-title">Detailed Report by Currency</div>`;
+  // ── OVERVIEW TAB ──
+  const overviewHtml=`<div class="tab-content active" id="tab-overview">
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-title">Income by Month</div><div class="chart-wrap"><canvas id="chart-monthly"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Expense Breakdown (USD)</div><div class="chart-wrap"><canvas id="chart-exp"></canvas></div></div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-title">Revenue by Client (SGD)</div><div class="chart-wrap"><canvas id="chart-clients"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Wallet Closing Balances</div><div class="chart-wrap"><canvas id="chart-bal"></canvas></div></div>
+    </div>
+  </div>`;
 
-  currencies.forEach(cur => {
-    const flag = CUR_FLAGS[cur] || '💱';
-    const color = CUR_COLOR[cur] || '#1a2b45';
-    const open = openingBal[cur] ? openingBal[cur].opening : 0;
-    const close = closingBal[cur] || 0;
-    const { income, expenses } = byOCurrency[cur];
-
-    const totalIn = income.reduce((a,t) => a+t.credit, 0);
-    const totalOut = expenses.reduce((a,t) => a+t.debit, 0);
-    const net = totalIn - totalOut;
-    const netClass = net >= 0 ? 'pos-bg' : 'neg-bg';
-    const netColor = net >= 0 ? '#0d9e72' : '#d44f2e';
-    const netSign = net >= 0 ? '+' : '-';
-
-    const incRows = income.map(t => `
-      <div class="txn">
-        <div class="txn-left">
-          <div class="txn-date">${t.date}</div>
-          <div class="txn-desc" title="${t.desc}">${t.desc.substring(0,55)}${t.desc.length>55?'…':''}</div>
-          <div class="txn-cat">${t.category}</div>
-        </div>
-        <div class="txn-amt c">+${fmt(t.credit)}</div>
-      </div>`).join('');
-
-    const expRows = expenses.map(t => `
-      <div class="txn">
-        <div class="txn-left">
-          <div class="txn-date">${t.date}</div>
-          <div class="txn-desc" title="${t.desc}">${t.desc.substring(0,55)}${t.desc.length>55?'…':''}</div>
-          <div class="txn-cat">${t.category}</div>
-        </div>
-        <div class="txn-amt d">-${fmt(t.debit)}</div>
-      </div>`).join('');
-
-    html += `
-    <div class="cur-block">
+  // ── INCOME & EXPENSES TAB ──
+  let detailsHtml='<div class="tab-content" id="tab-details">';
+  currencies.forEach(cur=>{
+    const flag=CUR_FLAGS[cur]||'💱', color=CUR_COLOR[cur]||'#1a2b45';
+    const open=openingBal[cur]?openingBal[cur].opening:0, close=closingBal[cur]||0;
+    const {income,expenses}=byCur[cur];
+    const totalIn=income.reduce((a,t)=>a+t.credit,0);
+    const totalOut=expenses.reduce((a,t)=>a+t.debit,0);
+    const net=totalIn-totalOut;
+    const nc=net>=0?'pos-bg':'neg-bg', ncolor=net>=0?'#0d9e72':'#d44f2e';
+    const ns=net>=0?'+':'-';
+    const incRows=income.map(t=>`<div class="txn"><div class="txn-left"><div class="txn-date">${t.date}</div><div class="txn-desc" title="${t.desc}">${t.desc.substring(0,60)}${t.desc.length>60?'…':''}</div><div class="txn-cat">${t.category}</div></div><div class="txn-amt c">+${fmt(t.credit)}</div></div>`).join('');
+    const expRows=expenses.map(t=>`<div class="txn"><div class="txn-left"><div class="txn-date">${t.date}</div><div class="txn-desc" title="${t.desc}">${t.desc.substring(0,60)}${t.desc.length>60?'…':''}</div><div class="txn-cat">${t.category}</div></div><div class="txn-amt d">-${fmt(t.debit)}</div></div>`).join('');
+    detailsHtml+=`<div class="cur-block">
       <div class="cur-header">
         <div class="cur-title" style="color:${color}">${flag} ${cur} Wallet</div>
         <div class="cur-balances">
-          <div class="bal">
-            <div class="bal-label">Beginning Balance</div>
-            <div class="bal-val neu">${cur} ${fmt(open)}</div>
-          </div>
+          <div class="bal"><div class="bal-label">Beginning Balance</div><div class="bal-val neu">${cur} ${fmt(open)}</div></div>
           <div style="color:#c8d4e0;font-size:18px;align-self:center">→</div>
-          <div class="bal">
-            <div class="bal-label">Ending Balance</div>
-            <div class="bal-val ${close>0?'pos':'neu'}">${cur} ${fmt(close)}</div>
-          </div>
+          <div class="bal"><div class="bal-label">Ending Balance</div><div class="bal-val ${close>0?'pos':'neu'}">${cur} ${fmt(close)}</div></div>
         </div>
       </div>
-      <div class="net-strip ${netClass}">
-        <span style="font-weight:600">Period Net (Income – Expenses)</span>
-        <span style="font-size:15px;font-weight:700;color:${netColor}">${netSign}${cur} ${fmt(Math.abs(net))}</span>
-      </div>
+      <div class="net-strip ${nc}"><span style="font-weight:600">Period Net</span><span style="font-size:15px;font-weight:700;color:${ncolor}">${ns}${cur} ${fmt(Math.abs(net))}</span></div>
       <div class="two-col">
-        <div class="col-panel">
-          <div class="col-head inc">
-            <span>Income (${income.length} transactions)</span>
-            <span>${cur} ${fmt(totalIn)}</span>
-          </div>
-          ${incRows || '<div class="empty">No income transactions</div>'}
-        </div>
-        <div class="col-panel">
-          <div class="col-head exp">
-            <span>Expenses (${expenses.length} transactions)</span>
-            <span>${cur} ${fmt(totalOut)}</span>
-          </div>
-          ${expRows || '<div class="empty">No expense transactions</div>'}
-        </div>
+        <div class="col-panel"><div class="col-head inc"><span>Income (${income.length})</span><span>${cur} ${fmt(totalIn)}</span></div>${incRows||'<div class="empty">No income</div>'}</div>
+        <div class="col-panel"><div class="col-head exp"><span>Expenses (${expenses.length})</span><span>${cur} ${fmt(totalOut)}</span></div>${expRows||'<div class="empty">No expenses</div>'}</div>
       </div>
       <div class="cur-footer">
         <div class="foot-item"><div class="foot-label">Total Income</div><div class="foot-val pos">${cur} ${fmt(totalIn)}</div></div>
         <div class="foot-item"><div class="foot-label">Total Expenses</div><div class="foot-val neg">${cur} ${fmt(totalOut)}</div></div>
-        <div class="foot-item"><div class="foot-label">Net</div><div class="foot-val" style="color:${netColor}">${netSign}${cur} ${fmt(Math.abs(net))}</div></div>
+        <div class="foot-item"><div class="foot-label">Net</div><div class="foot-val" style="color:${ncolor}">${ns}${cur} ${fmt(Math.abs(net))}</div></div>
         <div class="foot-item"><div class="foot-label">Opening</div><div class="foot-val">${cur} ${fmt(open)}</div></div>
         <div class="foot-item"><div class="foot-label">Closing</div><div class="foot-val ${close>0?'pos':'neu'}">${cur} ${fmt(close)}</div></div>
       </div>
     </div>`;
   });
+  detailsHtml+='</div>';
 
-  document.getElementById('app').innerHTML = html;
+  // ── P&L TAB ──
+  // Build P&L per currency
+  let plHtml='<div class="tab-content" id="tab-pl">';
+  currencies.forEach(cur=>{
+    const flag=CUR_FLAGS[cur]||'💱', color=CUR_COLOR[cur]||'#1a2b45';
+    const {income,expenses}=byCur[cur];
+
+    // Group income by description
+    const incGroups={};
+    income.forEach(t=>{
+      const k=t.desc.substring(0,50);
+      if(!incGroups[k]) incGroups[k]={desc:t.desc,cat:t.category,total:0,count:0};
+      incGroups[k].total+=t.credit; incGroups[k].count++;
+    });
+
+    // Group expenses by category
+    const expGroups={};
+    expenses.forEach(t=>{
+      const k=t.category;
+      if(!expGroups[k]) expGroups[k]={items:[],total:0};
+      expGroups[k].total+=t.debit;
+      expGroups[k].items.push(t);
+    });
+
+    const totalInc=income.reduce((a,t)=>a+t.credit,0);
+    const totalExp=expenses.reduce((a,t)=>a+t.debit,0);
+    const net=totalInc-totalExp;
+    const netColor=net>=0?'#0d9e72':'#d44f2e';
+
+    let rows='';
+    // Revenue rows
+    rows+=`<tr class="pl-sec"><td colspan="2">Revenue</td></tr>`;
+    Object.values(incGroups).sort((a,b)=>b.total-a.total).forEach(g=>{
+      rows+=`<tr><td style="padding-left:32px">${g.desc.substring(0,60)}${g.desc.length>60?'…':''} ${g.count>1?`<span style="font-size:10px;color:#9aabbc">(×${g.count})</span>`:''}</td><td style="color:#0d9e72">${cur} ${fmt(g.total)}</td></tr>`;
+    });
+    rows+=`<tr class="pl-total"><td>Total Revenue</td><td style="color:#0d9e72">${cur} ${fmt(totalInc)}</td></tr>`;
+
+    // Expense rows grouped by category
+    rows+=`<tr class="pl-sec"><td colspan="2">Expenses</td></tr>`;
+    Object.entries(expGroups).sort((a,b)=>b[1].total-a[1].total).forEach(([cat,g])=>{
+      rows+=`<tr><td style="padding-left:16px;font-weight:600;font-size:12px;color:#3a4a5c">${cat}</td><td></td></tr>`;
+      g.items.forEach(t=>{
+        rows+=`<tr><td style="padding-left:32px;font-size:12px">${t.desc.substring(0,55)}${t.desc.length>55?'…':''}<span style="font-size:10px;color:#9aabbc;margin-left:6px">${t.date}</span></td><td style="color:#d44f2e">${cur} ${fmt(t.debit)}</td></tr>`;
+      });
+      rows+=`<tr style="background:#fff8f8"><td style="padding-left:32px;font-size:11px;color:#9aabbc">Subtotal – ${cat}</td><td style="color:#d44f2e;font-size:12px">${cur} ${fmt(g.total)}</td></tr>`;
+    });
+    rows+=`<tr class="pl-total"><td>Total Expenses</td><td style="color:#d44f2e">${cur} ${fmt(totalExp)}</td></tr>`;
+    rows+=`<tr class="pl-net"><td>NET PROFIT / LOSS</td><td style="color:${netColor}">${net>=0?'+':'–'}${cur} ${fmt(Math.abs(net))}</td></tr>`;
+
+    plHtml+=`<div class="pl-card">
+      <div class="pl-card-title">
+        <span style="color:${color}">${flag} ${cur} — Profit & Loss</span>
+        <span style="font-size:12px;font-weight:400;color:#6b7f94">${minDate} → ${maxDate}</span>
+      </div>
+      <table class="pl-table">
+        <thead><tr><th style="width:65%">Description</th><th>Amount</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  });
+  plHtml+='</div>';
+
+  // ── INSIGHTS TAB ──
+  // Auto-generate insights from data
+  const insights=[];
+
+  // Top SGD client
+  const sgdClients={};
+  txns.filter(t=>t.walletCur==='SGD'&&t.credit>0&&t.category.startsWith('Revenue')).forEach(t=>{
+    const k=t.desc.split('|')[0].trim().substring(0,40);
+    sgdClients[k]=(sgdClients[k]||0)+t.credit;
+  });
+  const topClient=Object.entries(sgdClients).sort((a,b)=>b[1]-a[1])[0];
+  if(topClient) insights.push({type:'good',icon:'🏆',title:'Top SGD Client',finding:`${topClient[0]} — SGD ${fmt(topClient[1])}`,action:'Highest revenue client. Prioritise relationship and confirm next billing cycle.'});
+
+  // Cambridge marketing cost
+  const cambridge=txns.filter(t=>t.desc.toLowerCase().includes('cambridge'));
+  if(cambridge.length>0){
+    const total=cambridge.reduce((a,t)=>a+t.debit,0);
+    const pct=sgdInc>0?Math.round(total/sgdInc*100):0;
+    insights.push({type:'amber',icon:'📢',title:'Marketing Spend',finding:`Cambridge Consolidated — SGD ${fmt(total)} total (${pct}% of SGD revenue)`,action:'Track ROI monthly. Tie spend to client acquisition numbers.'});
+  }
+
+  // EasyToRefer
+  const easy=txns.filter(t=>t.desc.toLowerCase().includes('easytorefer'));
+  if(easy.length>=3) insights.push({type:'flag',icon:'⚠️',title:'Recurring Micro-charge',finding:`EasyToRefer charged ${easy.length}× at USD 5.00 each = USD ${fmt(easy.length*5)}`,action:'Log in and confirm billing cycle. If weekly and underused, cancel.'});
+
+  // USD income gap
+  if(usdInc<usdExp) insights.push({type:'flag',icon:'💸',title:'USD Income Gap',finding:`USD income (${fmt(usdInc)}) is less than USD expenses (${fmt(usdExp)})`,action:'USD wallet relies on FX conversions from SGD to cover operations. Monitor monthly.'});
+
+  // Yield
+  if(usdYield>0) insights.push({type:'good',icon:'📈',title:'Yield Strategy',finding:`USD ${fmt(usdYield)} parked in Airwallex Yield — earning passive interest`,action:'At ~4.5% annual rate, this earns approx. USD '+fmt(usdYield*0.045/12)+'/month. Keep excess USD in yield.'});
+
+  // SGD net
+  const sgdNet=sgdInc-sgdExp;
+  if(sgdNet>0) insights.push({type:'good',icon:'✅',title:'SGD Cash Flow',finding:`SGD net position is +SGD ${fmt(sgdNet)} after all operating expenses`,action:'Strong SGD position. Ensure Cambridge retainer is tracked against client growth.'});
+
+  // Staff cost
+  const staff=txns.filter(t=>t.category==='Staff / Contractor');
+  if(staff.length>0){
+    const stTotal=staff.reduce((a,t)=>a+t.debit,0);
+    insights.push({type:'info',icon:'👥',title:'Staff / Contractor Costs',finding:`Total USD ${fmt(stTotal)} across ${staff.length} payments`,action:'Predictable monthly cost. Budget as fixed expense in cash flow planning.'});
+  }
+
+  const typeIcon={good:'good',flag:'flag',amber:'amber',info:'good'};
+  const insightRows=insights.map(i=>`
+    <div class="insight-card">
+      <div class="ic-header flag-${i.type==='flag'?'red':i.type==='amber'?'amber':'green'}">
+        <span>${i.icon}</span> ${i.title}
+      </div>
+      <div class="ic-body">
+        <div class="insight-row">
+          <div><div class="insight-label">${i.finding}</div><div class="insight-action">→ ${i.action}</div></div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Closing balance summary for insights
+  const balSummary=currencies.map(cur=>{
+    const close=closingBal[cur]||0;
+    return `<div class="insight-row"><div class="insight-label">${CUR_FLAGS[cur]||''} ${cur} wallet</div><div class="insight-val ${close>0?'pos':'neu'}">${cur} ${fmt(close)}</div></div>`;
+  }).join('');
+
+  const insightsHtml=`<div class="tab-content" id="tab-insights">
+    <div class="insight-card">
+      <div class="ic-header">💰 Current Wallet Balances</div>
+      <div class="ic-body">${balSummary}</div>
+    </div>
+    ${insightRows}
+  </div>`;
+
+  // ── ASSEMBLE ──
+  document.getElementById('app').innerHTML = metricsHtml + tabsHtml + overviewHtml + detailsHtml + plHtml + insightsHtml;
 
   // ── CHARTS ──
   // Monthly income
-  const months = {};
-  txns.forEach(t => {
-    if (!t.credit || !t.category.startsWith('Revenue')) return;
-    if (!months[t.month]) months[t.month] = { SGD:0, USD:0, GBP:0 };
-    months[t.month][t.walletCur] = (months[t.month][t.walletCur]||0) + t.credit;
+  const months={};
+  txns.forEach(t=>{
+    if(!t.credit||!t.category.startsWith('Revenue')) return;
+    if(!months[t.month]) months[t.month]={SGD:0,USD:0,GBP:0};
+    months[t.month][t.walletCur]=(months[t.month][t.walletCur]||0)+t.credit;
   });
-  const mLabels = Object.keys(months).sort();
-  new Chart(document.getElementById('chart-monthly'), {
-    type: 'bar',
-    data: {
-      labels: mLabels,
-      datasets: [
-        { label:'SGD', data: mLabels.map(m=>months[m].SGD||0), backgroundColor:'#0d9e72' },
-        { label:'USD', data: mLabels.map(m=>months[m].USD||0), backgroundColor:'#1a5fbf' },
-        { label:'GBP', data: mLabels.map(m=>months[m].GBP||0), backgroundColor:'#c07f1a' },
-      ]
-    },
-    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, boxWidth:12 }}}, scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f0f4f9'}} }}
-  });
+  const mL=Object.keys(months).sort();
+  new Chart(document.getElementById('chart-monthly'),{type:'bar',data:{labels:mL,datasets:[
+    {label:'SGD',data:mL.map(m=>months[m].SGD||0),backgroundColor:'#0d9e72'},
+    {label:'USD',data:mL.map(m=>months[m].USD||0),backgroundColor:'#1a5fbf'},
+    {label:'GBP',data:mL.map(m=>months[m].GBP||0),backgroundColor:'#c07f1a'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f9'}}}}});
 
-  // Expense breakdown USD
-  const expCats = {};
-  txns.filter(t => t.walletCur==='USD' && t.debit>0 && !['Yield Transfer','FX Conversion'].includes(t.category))
-      .forEach(t => { expCats[t.category] = (expCats[t.category]||0) + t.debit; });
-  const expEntries = Object.entries(expCats).sort((a,b)=>b[1]-a[1]);
-  new Chart(document.getElementById('chart-exp'), {
-    type: 'doughnut',
-    data: {
-      labels: expEntries.map(e=>e[0]),
-      datasets: [{ data: expEntries.map(e=>e[1]), backgroundColor:['#1a5fbf','#0d9e72','#d44f2e','#c07f1a','#7c3aed','#0891b2','#9aabbc'], borderWidth:2, borderColor:'#fff' }]
-    },
-    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, boxWidth:12 }}}}
+  // USD expense breakdown
+  const expCats={};
+  txns.filter(t=>t.walletCur==='USD'&&t.debit>0&&!['Yield Transfer','FX Conversion'].includes(t.category))
+      .forEach(t=>{expCats[t.category]=(expCats[t.category]||0)+t.debit;});
+  const expE=Object.entries(expCats).sort((a,b)=>b[1]-a[1]);
+  new Chart(document.getElementById('chart-exp'),{type:'doughnut',data:{labels:expE.map(e=>e[0]),datasets:[{data:expE.map(e=>e[1]),backgroundColor:['#1a5fbf','#0d9e72','#d44f2e','#c07f1a','#7c3aed','#0891b2','#9aabbc'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}});
+
+  // SGD clients
+  const clients={};
+  txns.filter(t=>t.walletCur==='SGD'&&t.credit>0&&t.category.startsWith('Revenue')).forEach(t=>{
+    const k=t.desc.split('|')[0].trim().substring(0,25);
+    clients[k]=(clients[k]||0)+t.credit;
   });
+  const cE=Object.entries(clients).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  new Chart(document.getElementById('chart-clients'),{type:'bar',data:{labels:cE.map(e=>e[0]),datasets:[{data:cE.map(e=>e[1]),backgroundColor:'#0d9e72'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f4f9'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+
+  // Wallet balances
+  const balCurs=currencies.filter(c=>closingBal[c]>0);
+  new Chart(document.getElementById('chart-bal'),{type:'bar',data:{labels:balCurs,datasets:[
+    {label:'Opening',data:balCurs.map(c=>openingBal[c]?openingBal[c].opening:0),backgroundColor:'#c8d4e0'},
+    {label:'Closing',data:balCurs.map(c=>closingBal[c]||0),backgroundColor:balCurs.map(c=>CUR_COLOR[c]||'#1a5fbf')},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f9'}}}}});
 }
 
-// ── INIT ──
-loadCSV().then(txns => { if (txns) render(buildData(txns)); });
+loadCSV().then(txns=>{ if(txns) render(buildData(txns)); });
 </script>
 </body>
 </html>
