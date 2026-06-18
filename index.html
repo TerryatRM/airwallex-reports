@@ -3,1077 +3,493 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Airwallex Financial Analyzer</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<title>Airwallex Financial Report</title>
 <style>
-  :root {
-    --ink: #0f1923;
-    --ink-2: #3a4a5c;
-    --ink-3: #6b7f94;
-    --paper: #f7f9fc;
-    --surface: #ffffff;
-    --border: #e2e8f0;
-    --green: #0d9e72;
-    --green-light: #e6f7f2;
-    --red: #d44f2e;
-    --red-light: #fdf0ed;
-    --amber: #c07f1a;
-    --amber-light: #fdf4e3;
-    --blue: #1a5fbf;
-    --blue-light: #e8f0fd;
-    --accent: #1a5fbf;
-    --radius: 8px;
-    --radius-lg: 14px;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f4f6f9;
+  color: #1a2b45;
+  font-size: 14px;
+}
 
-  body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: var(--paper);
-    color: var(--ink);
-    font-size: 14px;
-    line-height: 1.6;
-  }
+.header {
+  background: #0f1923;
+  padding: 0 32px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.brand { color: #fff; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.brand span { color: #5b9cf6; }
+.btn-key { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 14px; border-radius: 7px; font-size: 12px; cursor: pointer; }
+.btn-key:hover { background: rgba(255,255,255,0.18); }
 
-  /* ── HEADER ── */
-  .header {
-    background: var(--ink);
-    padding: 0 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
-  .header-brand span { color: #5b9cf6; }
-  .btn-settings {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: var(--radius);
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .btn-settings:hover { background: rgba(255,255,255,0.18); }
+.main { max-width: 960px; margin: 0 auto; padding: 32px 20px 80px; }
 
-  /* ── MAIN LAYOUT ── */
-  .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+/* UPLOAD */
+.upload-area {
+  background: #fff;
+  border: 2px dashed #c8d4e0;
+  border-radius: 14px;
+  padding: 48px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 24px;
+}
+.upload-area:hover, .upload-area.drag { border-color: #1a5fbf; background: #f0f5ff; }
+.upload-area input { display: none; }
+.upload-icon { font-size: 40px; margin-bottom: 12px; }
+.upload-title { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.upload-sub { font-size: 13px; color: #6b7f94; }
+.upload-sub a { color: #1a5fbf; cursor: pointer; }
+.upload-hint { margin-top: 14px; display: inline-flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.hint-pill { font-size: 11px; padding: 4px 12px; border-radius: 99px; font-weight: 500; }
+.hint-usd { background: #e8f0fd; color: #1a5fbf; }
+.hint-sgd { background: #e6f7f2; color: #0d9e72; }
+.hint-gbp { background: #fdf4e3; color: #c07f1a; }
+.hint-aud { background: #fdf0ed; color: #d44f2e; }
 
-  /* ── UPLOAD ZONE ── */
-  #upload-section { margin-bottom: 32px; }
+/* LOADING */
+.loading { text-align: center; padding: 48px; }
+.spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #1a5fbf; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-msg { font-size: 14px; color: #6b7f94; }
 
-  .upload-card {
-    background: var(--surface);
-    border: 1.5px dashed var(--border);
-    border-radius: var(--radius-lg);
-    padding: 48px 32px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-  }
-  .upload-card:hover, .upload-card.drag { border-color: var(--accent); background: var(--blue-light); }
-  .upload-card input { display: none; }
-  .upload-icon { font-size: 40px; margin-bottom: 12px; }
-  .upload-title { font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
-  .upload-sub { font-size: 13px; color: var(--ink-3); }
-  .upload-sub a { color: var(--accent); cursor: pointer; text-decoration: none; }
+/* CURRENCY BLOCKS */
+.currency-block {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.currency-header {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+}
+.currency-name {
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cur-flag { font-size: 22px; }
+.balance-pills { display: flex; gap: 12px; flex-wrap: wrap; }
+.bal-pill {
+  text-align: right;
+}
+.bal-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7f94; margin-bottom: 2px; }
+.bal-val { font-size: 16px; font-weight: 700; }
+.bal-val.pos { color: #0d9e72; }
+.bal-val.neu { color: #1a2b45; }
+.bal-val.neg { color: #d44f2e; }
 
-  /* ── METRICS ── */
-  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
-  .metric {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    padding: 18px 20px;
-    border: 1px solid var(--border);
-  }
-  .metric-label { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-  .metric-value { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
-  .metric-value.pos { color: var(--green); }
-  .metric-value.neg { color: var(--red); }
-  .metric-value.neu { color: var(--ink); }
-  .metric-sub { font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+/* NET BAR */
+.net-bar {
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.net-bar.profit { background: #f0faf6; }
+.net-bar.loss { background: #fef4f1; }
+.net-label { font-weight: 600; }
+.net-val { font-size: 15px; font-weight: 700; }
+.net-bar.profit .net-val { color: #0d9e72; }
+.net-bar.loss .net-val { color: #d44f2e; }
 
-  /* ── TABS ── */
-  .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: var(--border); border-radius: var(--radius); padding: 3px; width: fit-content; }
-  .tab {
-    padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
-    cursor: pointer; color: var(--ink-3); background: none; border: none;
-    transition: all 0.12s; white-space: nowrap;
-  }
-  .tab.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+/* TWO-COL TABLES */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; }
+@media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+.col-panel { padding: 20px 24px; }
+.col-panel:first-child { border-right: 1px solid #e2e8f0; }
+.col-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; margin-bottom: 14px; padding-bottom: 8px;
+  border-bottom: 2px solid;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.col-title.income { color: #0d9e72; border-color: #0d9e72; }
+.col-title.expense { color: #d44f2e; border-color: #d44f2e; }
+.col-total { font-size: 14px; font-weight: 700; }
 
-  /* ── CARDS ── */
-  .card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
-  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-  .card-title { font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.05em; }
-  .card-body { padding: 20px; }
+.txn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 7px 0;
+  border-bottom: 1px solid #f0f4f9;
+  gap: 12px;
+}
+.txn-row:last-child { border-bottom: none; }
+.txn-info { flex: 1; min-width: 0; }
+.txn-date { font-size: 10px; color: #6b7f94; margin-bottom: 1px; }
+.txn-desc { font-size: 12px; color: #1a2b45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.txn-type { font-size: 10px; color: #9aabbc; margin-top: 1px; }
+.txn-amt { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.txn-amt.credit { color: #0d9e72; }
+.txn-amt.debit { color: #d44f2e; }
 
-  /* ── TABLES ── */
-  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .tbl th { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-  .tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--ink); }
-  .tbl tr:last-child td { border-bottom: none; }
-  .tbl tr:hover td { background: var(--paper); }
-  .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .tbl .pos { color: var(--green); font-weight: 500; }
-  .tbl .neg { color: var(--red); font-weight: 500; }
-  .tbl .amb { color: var(--amber); }
-  .tbl .section-row td { background: #f0f4f9; font-weight: 600; font-size: 12px; color: var(--ink-2); padding: 6px 12px; }
-  .tbl .total-row td { background: var(--blue-light); font-weight: 700; border-top: 1px solid var(--border); }
+.empty-col { font-size: 13px; color: #9aabbc; padding: 12px 0; }
 
-  /* ── BADGE ── */
-  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .badge-green { background: var(--green-light); color: var(--green); }
-  .badge-red { background: var(--red-light); color: var(--red); }
-  .badge-amber { background: var(--amber-light); color: var(--amber); }
-  .badge-blue { background: var(--blue-light); color: var(--blue); }
+/* SUMMARY ROW */
+.summary-row {
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.summ-item { }
+.summ-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7f94; margin-bottom: 3px; }
+.summ-val { font-size: 14px; font-weight: 700; }
 
-  /* ── CHARTS ── */
-  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-  @media (max-width: 680px) { .charts-grid { grid-template-columns: 1fr; } }
-  .chart-wrap { height: 240px; position: relative; }
+/* MODAL */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+.modal-bg.open { display: flex; }
+.modal { background: #fff; border-radius: 14px; padding: 28px; width: 420px; max-width: 95vw; }
+.modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.modal p { font-size: 13px; color: #3a4a5c; margin-bottom: 16px; line-height: 1.6; }
+.modal input { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: monospace; margin-bottom: 6px; }
+.modal input:focus { outline: 2px solid #1a5fbf; border-color: transparent; }
+.modal-note { font-size: 11px; color: #9aabbc; margin-bottom: 18px; }
+.modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+.btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; color: #1a2b45; }
+.btn:hover { background: #f4f6f9; }
+.btn-primary { background: #1a5fbf; color: #fff; border-color: transparent; }
+.btn-primary:hover { opacity: 0.88; }
 
-  /* ── INSIGHTS ── */
-  .insight-item {
-    padding: 14px 16px;
-    border-radius: var(--radius);
-    margin-bottom: 10px;
-    border-left: 3px solid transparent;
-  }
-  .insight-item.flag { background: var(--red-light); border-color: var(--red); }
-  .insight-item.good { background: var(--green-light); border-color: var(--green); }
-  .insight-item.note { background: var(--amber-light); border-color: var(--amber); }
-  .insight-item.info { background: var(--blue-light); border-color: var(--blue); }
-  .insight-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
-  .insight-item.flag .insight-label { color: var(--red); }
-  .insight-item.good .insight-label { color: var(--green); }
-  .insight-item.note .insight-label { color: var(--amber); }
-  .insight-item.info .insight-label { color: var(--blue); }
-  .insight-finding { font-size: 13px; color: var(--ink); margin-bottom: 4px; font-weight: 500; }
-  .insight-action { font-size: 12px; color: var(--ink-2); }
+#results { display: none; }
+.new-upload-btn { display: inline-flex; align-items: center; gap: 6px; background: #f4f6f9; border: 1px solid #e2e8f0; color: #3a4a5c; padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; margin-bottom: 24px; }
+.new-upload-btn:hover { background: #e8edf4; }
 
-  .ai-block {
-    background: var(--ink);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    color: #e8edf4;
-    font-size: 13.5px;
-    line-height: 1.8;
-    white-space: pre-wrap;
-    margin-bottom: 20px;
-  }
-  .ai-block .ai-label { font-size: 11px; color: #5b9cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
-
-  /* ── LOADING ── */
-  .spinner { width: 18px; height: 18px; border: 2px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-bar { display: flex; align-items: center; padding: 20px; font-size: 13px; color: var(--ink-3); }
-
-  /* ── MODAL ── */
-  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
-  .modal-backdrop.open { display: flex; }
-  .modal { background: var(--surface); border-radius: var(--radius-lg); padding: 28px; width: 440px; max-width: 95vw; }
-  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-  .modal p { font-size: 13px; color: var(--ink-2); margin-bottom: 18px; line-height: 1.6; }
-  .modal input {
-    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
-    border-radius: var(--radius); font-size: 13px; font-family: monospace;
-    margin-bottom: 8px; color: var(--ink);
-  }
-  .modal input:focus { outline: 2px solid var(--accent); border-color: transparent; }
-  .modal-note { font-size: 11px; color: var(--ink-3); margin-bottom: 18px; }
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-  .btn { padding: 9px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--ink); }
-  .btn:hover { background: var(--paper); }
-  .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
-  .btn-primary:hover { opacity: 0.88; }
-
-  /* ── MISC ── */
-  #results-section { display: none; }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-  .empty { text-align: center; padding: 48px; color: var(--ink-3); font-size: 13px; }
-  .section-divider { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); padding: 18px 0 8px; }
-  .ai-generate-btn {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--ink); color: #fff; border: none;
-    padding: 10px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 500;
-    cursor: pointer; margin-bottom: 20px;
-  }
-  .ai-generate-btn:hover { opacity: 0.85; }
-  .ai-generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.source-note { font-size: 11px; color: #9aabbc; margin-bottom: 20px; text-align: center; }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="header">
-  <div class="header-brand">
+  <div class="brand">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="5" fill="#1a5fbf"/><path d="M4 14l4-8 3 5 2-3 3 6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Airwallex <span>Financial Analyzer</span>
+    Airwallex <span>Financial Report</span>
   </div>
-  <button class="btn-settings" onclick="openSettings()">⚙ Settings</button>
+  <button class="btn-key" onclick="openModal()">⚙ API Key</button>
 </header>
 
-<!-- MAIN -->
 <main class="main">
 
-  <!-- UPLOAD -->
-  <section id="upload-section">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-
-      <!-- CSV Upload -->
-      <div class="upload-card" id="drop-zone" onclick="document.getElementById('file-input').click()" style="padding:32px 20px">
-        <input type="file" id="file-input" accept=".csv">
-        <div class="upload-icon">📊</div>
-        <div class="upload-title" style="font-size:14px">Balance Activity CSV</div>
-        <div class="upload-sub">Airwallex → Transactions → Export CSV</div>
-        <div style="margin-top:10px;font-size:11px;background:var(--blue-light);color:var(--blue);padding:5px 10px;border-radius:6px;display:inline-block">Transaction-level detail</div>
+  <div id="upload-section">
+    <div class="upload-area" id="drop-zone">
+      <input type="file" id="file-input" accept=".pdf" multiple>
+      <div class="upload-icon">📋</div>
+      <div class="upload-title">Upload your Airwallex Statement PDFs</div>
+      <div class="upload-sub">Drop up to 4 PDF files here, or <a onclick="event.stopPropagation();document.getElementById('file-input').click()">browse to upload</a></div>
+      <div class="upload-hint">
+        <span class="hint-pill hint-usd">USD Statement</span>
+        <span class="hint-pill hint-sgd">SGD Statement</span>
+        <span class="hint-pill hint-gbp">GBP Statement</span>
+        <span class="hint-pill hint-aud">AUD Statement</span>
       </div>
-
-      <!-- PDF Upload -->
-      <div class="upload-card" id="pdf-drop-zone" onclick="document.getElementById('pdf-input').click()" style="padding:32px 20px;border-color:var(--green)">
-        <input type="file" id="pdf-input" accept=".pdf" multiple>
-        <div class="upload-icon">📋</div>
-        <div class="upload-title" style="font-size:14px">Account Statement PDFs</div>
-        <div class="upload-sub">Airwallex → Statements → Download ASR PDF</div>
-        <div style="margin-top:10px;font-size:11px;background:var(--green-light);color:var(--green);padding:5px 10px;border-radius:6px;display:inline-block">✓ Official opening &amp; closing balances</div>
-      </div>
+      <div class="upload-sub" style="margin-top:14px;font-size:11px">In Airwallex → Statements → Account Statement Reports → Download PDF per currency</div>
     </div>
+  </div>
 
-    <!-- Yield Override + PDF status -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-      <div style="flex:1;min-width:200px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:6px">Actual Yield Balance (optional override)</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:6px">
-            <label style="font-size:12px;color:var(--ink-2);white-space:nowrap">USD Yield:</label>
-            <input type="number" id="yield-usd" placeholder="e.g. 155000" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--ink)">
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <label style="font-size:12px;color:var(--ink-2);white-space:nowrap">GBP Yield:</label>
-            <input type="number" id="yield-gbp" placeholder="e.g. 15000" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--ink)">
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--ink-3);margin-top:4px">Enter your actual Airwallex Yield balance — overrides the CSV-counted figure</div>
-      </div>
-      <div id="pdf-status" style="font-size:12px;color:var(--ink-3);flex:1;min-width:160px;text-align:right"></div>
+  <div id="loading-section" style="display:none">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="loading-msg" id="loading-msg">Reading your PDF statements…</div>
     </div>
+  </div>
 
-    <div style="margin-top:12px;text-align:center">
-      <div style="font-size:12px;color:var(--ink-3)">Upload the CSV first for full transaction detail — PDFs provide official opening/closing balances</div>
-    </div>
-  </section>
+  <div id="results">
+    <button class="new-upload-btn" onclick="resetApp()">← Upload new statements</button>
+    <div class="source-note" id="source-note"></div>
+    <div id="currency-blocks"></div>
+  </div>
 
-  <!-- RESULTS -->
-  <section id="results-section">
-
-    <!-- METRICS -->
-    <div class="metrics-grid" id="metrics-grid"></div>
-
-    <!-- TABS -->
-    <div class="tabs">
-      <button class="tab active" onclick="showTab('overview')">Overview</button>
-      <button class="tab" onclick="showTab('pl')">P&amp;L</button>
-      <button class="tab" onclick="showTab('balance')">Balance Sheet</button>
-      <button class="tab" onclick="showTab('transactions')">Transactions</button>
-      <button class="tab" onclick="showTab('insights')">AI Insights</button>
-    </div>
-
-    <!-- OVERVIEW TAB -->
-    <div class="tab-content active" id="tab-overview">
-      <div class="charts-grid">
-        <div class="card">
-          <div class="card-header"><span class="card-title">Income by Month</span></div>
-          <div class="card-body"><div class="chart-wrap"><canvas id="chart-monthly"></canvas></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">Expense Breakdown</span></div>
-          <div class="card-body"><div class="chart-wrap"><canvas id="chart-expenses"></canvas></div></div>
-        </div>
-      </div>
-      <div class="charts-grid">
-        <div class="card">
-          <div class="card-header"><span class="card-title">Revenue by Client (SGD)</span></div>
-          <div class="card-body"><div class="chart-wrap"><canvas id="chart-clients"></canvas></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">Transaction Types</span></div>
-          <div class="card-body"><div class="chart-wrap"><canvas id="chart-types"></canvas></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- P&L TAB -->
-    <div class="tab-content" id="tab-pl">
-      <div class="card">
-        <div class="card-header"><span class="card-title">Profit & Loss Statement</span><span id="pl-period" style="font-size:12px;color:var(--ink-3)"></span></div>
-        <div class="card-body" style="padding:0">
-          <table class="tbl" id="pl-table"></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- BALANCE SHEET TAB -->
-    <div class="tab-content" id="tab-balance">
-      <div class="card">
-        <div class="card-header"><span class="card-title">Account Balance Sheet</span><span id="bs-date" style="font-size:12px;color:var(--ink-3)"></span></div>
-        <div class="card-body" style="padding:0">
-          <table class="tbl" id="bs-table"></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- TRANSACTIONS TAB -->
-    <div class="tab-content" id="tab-transactions">
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">All Transactions</span>
-          <span id="txn-count" style="font-size:12px;color:var(--ink-3)"></span>
-        </div>
-        <div class="card-body" style="padding:0;overflow-x:auto">
-          <table class="tbl" id="txn-table"></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI INSIGHTS TAB -->
-    <div class="tab-content" id="tab-insights">
-      <button class="ai-generate-btn" id="ai-btn" onclick="generateInsights()">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#5b9cf6" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="#5b9cf6" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Generate AI analysis
-      </button>
-      <div id="ai-output"></div>
-      <div id="static-insights"></div>
-    </div>
-
-  </section>
 </main>
 
-<!-- SETTINGS MODAL -->
-<div class="modal-backdrop" id="modal">
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
   <div class="modal">
-    <h3>Settings</h3>
-    <p>Enter your Anthropic API key to enable AI-powered analysis. Your key is stored only in your browser and never sent anywhere except Anthropic's API.</p>
-    <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
-    <div class="modal-note">Get a key at <strong>console.anthropic.com</strong> → API Keys → Create Key</div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeSettings()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveSettings()">Save key</button>
+    <h3>Anthropic API Key</h3>
+    <p>Required to read the PDF statements. Your key is stored only in your browser and never shared anywhere except Anthropic's API.</p>
+    <input type="password" id="key-input" placeholder="sk-ant-..." autocomplete="off">
+    <div class="modal-note">Get one free at console.anthropic.com → API Keys</div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveKey()">Save</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── STATE ──
-let parsedTxns = [];
-let summary = {};
-let pdfBalances = {}; // official balances from PDF ASR statements
-
-// ── SETTINGS ──
-function openSettings() {
-  const k = localStorage.getItem('aw_api_key') || '';
-  document.getElementById('api-key-input').value = k;
+function openModal() {
+  document.getElementById('key-input').value = localStorage.getItem('aw_key') || '';
   document.getElementById('modal').classList.add('open');
 }
-function closeSettings() { document.getElementById('modal').classList.remove('open'); }
-function saveSettings() {
-  const k = document.getElementById('api-key-input').value.trim();
-  if (k) localStorage.setItem('aw_api_key', k);
-  closeSettings();
-  alert('API key saved.');
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function saveKey() {
+  const k = document.getElementById('key-input').value.trim();
+  if (k) { localStorage.setItem('aw_key', k); closeModal(); alert('API key saved.'); }
 }
 
-// ── CSV FILE UPLOAD ──
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+// Upload wiring
+const dz = document.getElementById('drop-zone');
+const fi = document.getElementById('file-input');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
+fi.addEventListener('change', e => handleFiles(e.target.files));
 
-function handleFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => processCSV(e.target.result);
-  reader.readAsText(file);
-}
-
-// ── PDF UPLOAD ──
-const pdfDropZone = document.getElementById('pdf-drop-zone');
-const pdfInput = document.getElementById('pdf-input');
-pdfDropZone.addEventListener('dragover', e => { e.preventDefault(); pdfDropZone.classList.add('drag'); });
-pdfDropZone.addEventListener('dragleave', () => pdfDropZone.classList.remove('drag'));
-pdfDropZone.addEventListener('drop', e => { e.preventDefault(); pdfDropZone.classList.remove('drag'); handlePDFs(e.dataTransfer.files); });
-pdfInput.addEventListener('change', e => handlePDFs(e.target.files));
-
-function handlePDFs(files) {
+function handleFiles(files) {
   if (!files || files.length === 0) return;
-  const apiKey = localStorage.getItem('aw_api_key');
-  if (!apiKey) { openSettings(); return; }
-  
-  const status = document.getElementById('pdf-status');
-  status.textContent = `Processing ${files.length} PDF(s)…`;
-  pdfBalances = {};
-  
-  Array.from(files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = async e => {
-      const b64 = e.target.result.split(',')[1];
-      try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 1000,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
-                { type: 'text', text: 'Extract from this Airwallex Account Statement Report: the currency (AUD/USD/SGD/GBP), starting balance, ending balance, total collections/additions, and total payouts/subtractions. Respond ONLY with valid JSON like: {"currency":"USD","opening":17500.39,"closing":12407.24,"total_in":102227.96,"total_out":107321.11,"period_start":"2026-01-01","period_end":"2026-06-17"}' }
-              ]
-            }]
-          })
-        });
-        const data = await res.json();
-        const text = data.content[0].text.replace(/```json|```/g,'').trim();
-        const parsed = JSON.parse(text);
-        pdfBalances[parsed.currency] = parsed;
-        
-        const currencies = Object.keys(pdfBalances).join(', ');
-        status.innerHTML = `<span style="color:var(--green)">✓ PDF balances loaded: ${currencies}</span>`;
-        
-        // If CSV already loaded, refresh balance sheet with official figures
-        if (parsedTxns.length > 0) { buildSummary(); renderBS(); renderMetrics(); }
-      } catch(err) {
-        status.innerHTML = `<span style="color:var(--red)">PDF parse error: ${err.message}</span>`;
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+  const key = localStorage.getItem('aw_key');
+  if (!key) { openModal(); return; }
+  processFiles(Array.from(files), key);
 }
 
-// ── YIELD OVERRIDE ──
-function getYieldOverride() {
-  const usd = parseFloat(document.getElementById('yield-usd').value) || null;
-  const gbp = parseFloat(document.getElementById('yield-gbp').value) || null;
-  return { usd, gbp };
+function resetApp() {
+  document.getElementById('upload-section').style.display = 'block';
+  document.getElementById('loading-section').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('currency-blocks').innerHTML = '';
+  fi.value = '';
 }
 
-// ── CSV PARSER ──
-function processCSV(text) {
-  const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-
-  const idx = name => headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
-  const iTime = idx('Time'), iType = idx('Type'), iFinType = idx('Financial Transaction'),
-        iDesc = idx('Description'), iWalletCur = idx('Wallet Currency'),
-        iTgtCur = idx('Target Currency'), iTgtAmt = idx('Target Amount'),
-        iConvRate = idx('Conversion'), iAmt = idx('Amount'), iFee = idx('Fee'),
-        iDebit = idx('Debit Net'), iCredit = idx('Credit Net'),
-        iBal = idx('Account Balance'), iRef = idx('Reference');
-
-  parsedTxns = [];
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    // Handle quoted fields with commas
-    const cols = [];
-    let inQ = false, cur = '';
-    for (const ch of lines[i] + ',') {
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else cur += ch;
-    }
-    const g = (j) => j >= 0 ? (cols[j] || '').replace(/^"|"$/g,'').replace(/,/g,'') : '';
-    const gn = (j) => parseFloat(g(j)) || 0;
-
-    const dateStr = g(iTime).split('T')[0];
-    const month = dateStr.substring(0, 7);
-    const type = g(iType);
-    const finType = g(iFinType);
-    const desc = g(iDesc);
-    const walletCur = g(iWalletCur);
-    const amount = gn(iAmt);
-    const debit = gn(iDebit);
-    const credit = gn(iCredit);
-    const balance = gn(iBal);
-    const ref = g(iRef);
-
-    if (!dateStr || !type) continue;
-
-    // Categorise
-    let category = 'Other';
-    const dl = desc.toLowerCase();
-    if (type === 'FEE') category = 'Bank Fee';
-    else if (type === 'YIELD') category = 'Yield Transfer';
-    else if (type === 'CONVERSION') category = 'FX Conversion';
-    else if (finType === 'PAYIN_SETTLEMENT') category = 'Revenue – Payin';
-    else if (type === 'DEPOSIT') category = 'Revenue – Deposit';
-    else if (type === 'PAYIN') category = 'Revenue – Payin';
-    else if (dl.includes('cambridge')) category = 'Marketing';
-    else if (dl.includes('ana liza') || dl.includes('gajete')) category = 'Staff / Contractor';
-    else if (dl.includes('dividend') || dl.includes('quarterly')) category = 'Director Dividend';
-    else if (dl.includes('vidiq') || dl.includes('heygen') || dl.includes('instantly') || dl.includes('higgsfield') || dl.includes('kie ai') || dl.includes('northnodes') || dl.includes('bayer') || dl.includes('grow on repeat') || dl.includes('demandgen') || dl.includes('million verifier') || dl.includes('easytorefer') || dl.includes('amazon') || dl.includes('google')) category = 'Software & Tools';
-    else if (dl.includes('cles llc') || dl.includes('refund')) category = 'Refund';
-    else if (type === 'PAYOUT') category = 'Payout';
-    else if (type === 'CARD') category = debit > 0 ? 'Software & Tools' : 'Card Refund';
-
-    parsedTxns.push({ date: dateStr, month, type, finType, desc, walletCur, amount, debit, credit, balance, ref, category });
-  }
-
-  // ── Compute opening balance per currency ──
-  // Opening = balance after first txn, reversed by that txn's effect
-  const firstSeen = {};
-  parsedTxns.forEach(t => {
-    if (t.balance > 0 && !firstSeen[t.walletCur]) {
-      const openingBal = t.balance - t.credit + t.debit;
-      firstSeen[t.walletCur] = { opening: openingBal, firstDate: t.date };
-    }
-  });
-  // attach to each txn for use in summary
-  parsedTxns._openingBal = firstSeen;
-
-  buildSummary();
-  renderAll();
+function fmt(n, cur) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const s = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (cur ? cur + ' ' : '') + s;
 }
 
-// ── SUMMARY ──
-function buildSummary() {
-  const s = {
-    sgdIncome: 0, usdIncome: 0, gbpIncome: 0,
-    sgdExpenses: 0, usdExpenses: 0, gbpExpenses: 0,
-    totalFees: { SGD: 0, USD: 0, GBP: 0 },
-    usdYield: 0, gbpYield: 0,
-    byMonth: {}, byClient: {}, byCategory: {},
-    closingBal: {},
-    openingBal: {},
-    txnCount: parsedTxns.length,
-    minDate: '', maxDate: ''
-  };
+const CUR_FLAGS = { USD: '🇺🇸', SGD: '🇸🇬', GBP: '🇬🇧', AUD: '🇦🇺', EUR: '🇪🇺', HKD: '🇭🇰', MYR: '🇲🇾' };
+const CUR_COLOR = { USD: '#1a5fbf', SGD: '#0d9e72', GBP: '#c07f1a', AUD: '#d44f2e', EUR: '#7c3aed', HKD: '#0891b2' };
 
-  const incomeTypes = new Set(['Revenue – Payin','Revenue – Deposit','Card Refund']);
-  const expenseCategories = new Set(['Marketing','Staff / Contractor','Software & Tools','Refund','Payout','Director Dividend']);
-
-  parsedTxns.forEach(t => {
-    if (!s.minDate || t.date < s.minDate) s.minDate = t.date;
-    if (!s.maxDate || t.date > s.maxDate) s.maxDate = t.date;
-
-    // Closing balance per currency (last seen)
-    if (t.balance > 0) s.closingBal[t.walletCur] = t.balance;
-
-    // Monthly income
-    if (!s.byMonth[t.month]) s.byMonth[t.month] = { sgd: 0, usd: 0, gbp: 0, expenses: 0 };
-
-    if (t.category === 'Bank Fee') {
-      s.totalFees[t.walletCur] = (s.totalFees[t.walletCur] || 0) + t.debit;
-    } else if (t.category === 'Yield Transfer') {
-      if (t.walletCur === 'USD') s.usdYield += t.debit;
-      if (t.walletCur === 'GBP') s.gbpYield += t.debit;
-    } else if (t.category === 'FX Conversion') {
-      // skip for P&L
-    } else if (incomeTypes.has(t.category)) {
-      if (t.walletCur === 'SGD') { s.sgdIncome += t.credit; s.byMonth[t.month].sgd += t.credit; }
-      if (t.walletCur === 'USD') { s.usdIncome += t.credit; s.byMonth[t.month].usd += t.credit; }
-      if (t.walletCur === 'GBP') { s.gbpIncome += t.credit; s.byMonth[t.month].gbp += t.credit; }
-      // Client tracking
-      const clientMatch = t.desc.match(/^([^|]+)\s*\|/);
-      const client = clientMatch ? clientMatch[1].trim() : t.desc.substring(0, 35);
-      if (t.walletCur === 'SGD') s.byClient[client] = (s.byClient[client] || 0) + t.credit;
-    } else if (expenseCategories.has(t.category)) {
-      s.byCategory[t.category] = (s.byCategory[t.category] || 0) + (t.debit || 0);
-      s.byMonth[t.month].expenses += t.debit;
-      if (t.walletCur === 'SGD') s.sgdExpenses += t.debit;
-      if (t.walletCur === 'USD') s.usdExpenses += t.debit;
-      if (t.walletCur === 'GBP') s.gbpExpenses += t.debit;
-    }
-  });
-
-  // Pull opening balances computed during parsing
-  s.openingBal = parsedTxns._openingBal || {};
-
-  // ── Override with official PDF balances if available ──
-  Object.entries(pdfBalances).forEach(([cur, data]) => {
-    s.openingBal[cur] = { opening: data.opening, firstDate: data.period_start };
-    s.closingBal[cur] = data.closing;
-    // Store official totals for balance sheet
-    if (!s.officialTotals) s.officialTotals = {};
-    s.officialTotals[cur] = { total_in: data.total_in, total_out: data.total_out, period_end: data.period_end };
-  });
-
-  // ── Apply yield override if provided ──
-  const yieldOverride = getYieldOverride();
-  if (yieldOverride.usd !== null) s.usdYield = yieldOverride.usd;
-  if (yieldOverride.gbp !== null) s.gbpYield = yieldOverride.gbp;
-
-  summary = s;
-}
-
-// ── FORMAT ──
-function fmt(n, cur = '') {
-  if (n === '' || n === null || n === undefined) return '—';
-  const num = typeof n === 'number' ? n : parseFloat(n);
-  if (isNaN(num)) return n;
-  return (cur ? cur + ' ' : '') + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-// ── RENDER ALL ──
-function renderAll() {
+async function processFiles(files, key) {
   document.getElementById('upload-section').style.display = 'none';
-  document.getElementById('results-section').style.display = 'block';
-  renderMetrics();
-  renderCharts();
-  renderPL();
-  renderBS();
-  renderTxnTable();
-  renderStaticInsights();
-}
+  document.getElementById('loading-section').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
 
-function renderMetrics() {
-  const s = summary;
-  const sgdNet = s.sgdIncome - s.sgdExpenses;
-  const usdNet = s.usdIncome - s.usdExpenses;
-  const hasPdf = Object.keys(pdfBalances).length > 0;
-  const pdfBadge = hasPdf ? ' <span style="font-size:10px;background:var(--green-light);color:var(--green);padding:1px 6px;border-radius:99px;font-weight:600;vertical-align:middle">✓ ASR</span>' : '';
-  const yieldOverride = getYieldOverride();
-  const usdYieldDisplay = yieldOverride.usd !== null ? yieldOverride.usd : s.usdYield;
-  const gbpYieldDisplay = yieldOverride.gbp !== null ? yieldOverride.gbp : s.gbpYield;
-  const yieldNote = yieldOverride.usd !== null ? 'Manual override' : (hasPdf ? 'From CSV transfers' : 'From CSV transfers');
-  document.getElementById('metrics-grid').innerHTML = `
-    <div class="metric"><div class="metric-label">SGD Income${pdfBadge}</div><div class="metric-value pos">${fmt(s.sgdIncome,'SGD')}</div><div class="metric-sub">Client deposits</div></div>
-    <div class="metric"><div class="metric-label">USD Income</div><div class="metric-value pos">${fmt(s.usdIncome,'USD')}</div><div class="metric-sub">Payins & deposits</div></div>
-    <div class="metric"><div class="metric-label">GBP Income</div><div class="metric-value pos">${fmt(s.gbpIncome,'GBP')}</div><div class="metric-sub">Client deposits</div></div>
-    <div class="metric"><div class="metric-label">SGD Net</div><div class="metric-value ${sgdNet>=0?'pos':'neg'}">${fmt(sgdNet,'SGD')}</div><div class="metric-sub">After operating expenses</div></div>
-    <div class="metric"><div class="metric-label">Total Transactions</div><div class="metric-value neu">${s.txnCount}</div><div class="metric-sub">${s.minDate} → ${s.maxDate}</div></div>
-    <div class="metric"><div class="metric-label">In Yield</div><div class="metric-value neu">${fmt(usdYieldDisplay,'USD')}</div><div class="metric-sub">${yieldNote} · GBP ${fmt(gbpYieldDisplay)}</div></div>
-  `;
-}
-
-// ── CHARTS ──
-let charts = {};
-function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
-
-function renderCharts() {
-  const s = summary;
-  const months = Object.keys(s.byMonth).sort();
-  const COLORS = ['#1a5fbf','#0d9e72','#d44f2e','#c07f1a','#7c3aed','#0891b2'];
-
-  // Monthly income
-  destroyChart('monthly');
-  charts['monthly'] = new Chart(document.getElementById('chart-monthly'), {
-    type: 'bar',
-    data: {
-      labels: months,
-      datasets: [
-        { label: 'SGD', data: months.map(m => s.byMonth[m].sgd), backgroundColor: '#1a5fbf' },
-        { label: 'USD', data: months.map(m => s.byMonth[m].usd), backgroundColor: '#0d9e72' },
-        { label: 'GBP', data: months.map(m => s.byMonth[m].gbp), backgroundColor: '#c07f1a' },
-      ]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f0f4f9' } } } }
-  });
-
-  // Expense breakdown
-  destroyChart('expenses');
-  const cats = Object.entries(s.byCategory).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
-  charts['expenses'] = new Chart(document.getElementById('chart-expenses'), {
-    type: 'doughnut',
-    data: { labels: cats.map(c=>c[0]), datasets: [{ data: cats.map(c=>c[1]), backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff' }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
-  });
-
-  // Clients
-  destroyChart('clients');
-  const clients = Object.entries(s.byClient).sort((a,b) => b[1]-a[1]).slice(0,6);
-  charts['clients'] = new Chart(document.getElementById('chart-clients'), {
-    type: 'bar',
-    data: { labels: clients.map(c=>c[0].substring(0,22)+'…'), datasets: [{ data: clients.map(c=>c[1]), backgroundColor: '#1a5fbf' }] },
-    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#f0f4f9' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
-  });
-
-  // Transaction types
-  destroyChart('types');
-  const typeCounts = {};
-  parsedTxns.forEach(t => { typeCounts[t.type] = (typeCounts[t.type]||0)+1; });
-  const typeEntries = Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]);
-  charts['types'] = new Chart(document.getElementById('chart-types'), {
-    type: 'doughnut',
-    data: { labels: typeEntries.map(e=>e[0]), datasets: [{ data: typeEntries.map(e=>e[1]), backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff' }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
-  });
-}
-
-// ── P&L TABLE ──
-function renderPL() {
-  const s = summary;
-  document.getElementById('pl-period').textContent = s.minDate + ' – ' + s.maxDate;
-
-  // Group income by client/source for SGD
-  const sgdClients = {};
-  const usdSources = {};
-  const gbpSources = {};
-  parsedTxns.forEach(t => {
-    if (!['Revenue – Payin','Revenue – Deposit','Card Refund'].includes(t.category)) return;
-    const clientMatch = t.desc.match(/^([^|]+)\s*\|/);
-    const label = clientMatch ? clientMatch[1].trim() : t.desc.substring(0, 50);
-    if (t.walletCur === 'SGD') sgdClients[label] = (sgdClients[label]||0) + t.credit;
-    if (t.walletCur === 'USD') usdSources[label] = (usdSources[label]||0) + t.credit;
-    if (t.walletCur === 'GBP') gbpSources[label] = (gbpSources[label]||0) + t.credit;
-  });
-
-  const staffUSD = {}, mktSGD = {}, softUSD = {}, otherUSD = {};
-  parsedTxns.forEach(t => {
-    if (t.category === 'Staff / Contractor') staffUSD[t.desc.substring(0,40)] = (staffUSD[t.desc.substring(0,40)]||0) + t.debit;
-    else if (t.category === 'Marketing') mktSGD[t.desc.substring(0,40)] = (mktSGD[t.desc.substring(0,40)]||0) + t.debit;
-    else if (t.category === 'Software & Tools') softUSD[t.desc.substring(0,40)] = (softUSD[t.desc.substring(0,40)]||0) + t.debit;
-    else if (t.category === 'Refund') otherUSD['Refund paid out'] = (otherUSD['Refund paid out']||0) + t.debit;
-    else if (t.category === 'Director Dividend') otherUSD['Director Dividend'] = (otherUSD['Director Dividend']||0) + t.debit;
-  });
-
-  const rows = [];
-  const addSection = (label) => rows.push({ type:'section', label });
-  const addRow = (label, cur, amt, cls='', note='') => rows.push({ type:'row', label, cur, amt, cls, note });
-  const addTotal = (label, cur, amt, cls='') => rows.push({ type:'total', label, cur, amt, cls });
-
-  addSection('REVENUE — SGD');
-  Object.entries(sgdClients).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => addRow(k,'SGD',v,'pos'));
-  addTotal('Total SGD Revenue','SGD',s.sgdIncome,'pos');
-
-  addSection('REVENUE — USD');
-  Object.entries(usdSources).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => addRow(k,'USD',v,'pos'));
-  addTotal('Total USD Revenue','USD',s.usdIncome,'pos');
-
-  if (s.gbpIncome > 0) {
-    addSection('REVENUE — GBP');
-    Object.entries(gbpSources).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => addRow(k,'GBP',v,'pos'));
-    addTotal('Total GBP Revenue','GBP',s.gbpIncome,'pos');
-  }
-
-  addSection('OPERATING EXPENSES — SGD');
-  Object.entries(mktSGD).forEach(([k,v]) => addRow(k,'SGD',v,'neg'));
-  addRow('SGD bank fees','SGD',s.totalFees.SGD||0,'neg');
-  addTotal('Total SGD Expenses','SGD',s.sgdExpenses + (s.totalFees.SGD||0),'neg');
-
-  addSection('OPERATING EXPENSES — USD');
-  Object.entries(staffUSD).forEach(([k,v]) => addRow(k,'USD',v,'neg'));
-  Object.entries(softUSD).forEach(([k,v]) => addRow(k,'USD',v,'neg'));
-  Object.entries(otherUSD).forEach(([k,v]) => addRow(k,'USD',v,'amb'));
-  addRow('USD bank/payin fees','USD',s.totalFees.USD||0,'neg');
-  addTotal('Total USD Expenses','USD',s.usdExpenses + (s.totalFees.USD||0),'neg');
-
-  addSection('NET POSITION (operating, excl. FX & yield)');
-  const sgdNet = s.sgdIncome - s.sgdExpenses - (s.totalFees.SGD||0);
-  const usdNet = s.usdIncome - s.usdExpenses - (s.totalFees.USD||0);
-  const gbpNet = s.gbpIncome - (s.totalFees.GBP||0);
-  addTotal('SGD Net','SGD',sgdNet, sgdNet>=0?'pos':'neg');
-  addTotal('USD Net (operating)','USD',usdNet, usdNet>=0?'pos':'neg');
-  if (s.gbpIncome > 0) addTotal('GBP Net','GBP',gbpNet, gbpNet>=0?'pos':'neg');
-
-  let html = '<thead><tr><th style="width:45%">Description</th><th>Currency</th><th class="num">Amount</th></tr></thead><tbody>';
-  rows.forEach(r => {
-    if (r.type === 'section') {
-      html += `<tr class="section-row"><td colspan="3">${r.label}</td></tr>`;
-    } else if (r.type === 'total') {
-      html += `<tr class="total-row"><td><strong>${r.label}</strong></td><td><strong>${r.cur}</strong></td><td class="num ${r.cls}"><strong>${fmt(r.amt)}</strong></td></tr>`;
-    } else {
-      html += `<tr><td>${r.label}</td><td style="color:var(--ink-3);font-size:12px">${r.cur}</td><td class="num ${r.cls}">${fmt(r.amt)}</td></tr>`;
+  const results = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    document.getElementById('loading-msg').textContent = `Reading ${file.name} (${i+1} of ${files.length})…`;
+    try {
+      const b64 = await fileToBase64(file);
+      const data = await extractFromPDF(b64, key);
+      if (data) results.push(data);
+    } catch(e) {
+      console.error('Error processing', file.name, e);
     }
-  });
-  html += '</tbody>';
-  document.getElementById('pl-table').innerHTML = html;
-}
-
-// ── BALANCE SHEET ──
-function renderBS() {
-  const s = summary;
-  document.getElementById('bs-date').textContent = 'As of ' + s.maxDate;
-
-  // ── Per-currency totals of credits and debits ──
-  const curCredits = {}, curDebits = {};
-  // Use official PDF totals if available, else sum from transactions
-  const hasPdf = Object.keys(pdfBalances).length > 0;
-  parsedTxns.forEach(t => {
-    if (t.credit > 0) curCredits[t.walletCur] = (curCredits[t.walletCur] || 0) + t.credit;
-    if (t.debit  > 0) curDebits[t.walletCur]  = (curDebits[t.walletCur]  || 0) + t.debit;
-  });
-  // Override with official PDF figures
-  if (s.officialTotals) {
-    Object.entries(s.officialTotals).forEach(([cur, data]) => {
-      curCredits[cur] = data.total_in;
-      curDebits[cur] = data.total_out;
-    });
   }
 
-  const rows = [];
-  const addSection = l          => rows.push({ type:'section', label:l });
-  const addRow    = (l,cur,amt,cls='',note='') => rows.push({ type:'row',   label:l, cur, amt, cls, note });
-  const addTotal  = (l,cur,amt,cls='')         => rows.push({ type:'total', label:l, cur, amt, cls });
-  const addMovement = (cur, open, close) => rows.push({ type:'movement', cur, open, close });
-
-  // ── SECTION 1: WALLET SUMMARY — one row per currency ──
-  addSection('WALLET BALANCES — OPENING & CLOSING');
-
-  // table header for movement rows is handled in the renderer
-  const currencies = [...new Set([
-    ...Object.keys(s.openingBal),
-    ...Object.keys(s.closingBal)
-  ])].sort();
-
-  currencies.forEach(cur => {
-    const open  = s.openingBal[cur]  ? s.openingBal[cur].opening  : 0;
-    const close = s.closingBal[cur] || 0;
-    addMovement(cur, open, close);
-  });
-
-  // ── SECTION 2: YIELD ──
-  const yieldOverride = getYieldOverride();
-  const usdYieldDisplay = yieldOverride.usd !== null ? yieldOverride.usd : s.usdYield;
-  const gbpYieldDisplay = yieldOverride.gbp !== null ? yieldOverride.gbp : s.gbpYield;
-  const yieldNote = yieldOverride.usd !== null ? 'Manual override — actual Airwallex Yield balance' : 'Counted from CSV transfers only';
-  if (usdYieldDisplay > 0 || gbpYieldDisplay > 0) {
-    addSection('YIELD BALANCES (parked, earning interest)');
-    if (usdYieldDisplay > 0) addRow('USD Yield balance', 'USD', usdYieldDisplay, 'pos', yieldNote);
-    if (gbpYieldDisplay > 0) addRow('GBP Yield balance', 'GBP', gbpYieldDisplay, 'pos', 'Company funds — not spent');
-    const totalYield = usdYieldDisplay + (gbpYieldDisplay * 1.27);
-    addRow('Approx. combined yield (USD equiv.)', 'USD', Math.round(totalYield), 'pos', 'GBP converted at ~1.27 for reference only');
-  }
-
-  // ── SECTION 3: WALLET ACTIVITY DETAIL per currency ──
-  currencies.forEach(cur => {
-    const open   = s.openingBal[cur] ? s.openingBal[cur].opening : 0;
-    const close  = s.closingBal[cur] || 0;
-    const credits = curCredits[cur] || 0;
-    const debits  = curDebits[cur]  || 0;
-    addSection(`${cur} WALLET — ACTIVITY DETAIL`);
-    addRow('Opening balance', cur, open, open > 0 ? 'pos' : '');
-    addRow('Total credits (money in)', cur, credits, 'pos');
-    addRow('Total debits (money out)', cur, debits, 'neg');
-    addTotal('Closing balance', cur, close, close >= open ? 'pos' : 'neg');
-  });
-
-  // ── SECTION 4: LIABILITIES ──
-  addSection('LIABILITIES');
-  addRow('Formal liabilities identified', '—', '', '', 'None visible in this export');
-  const staffTxns = parsedTxns.filter(t => t.category === 'Staff / Contractor');
-  if (staffTxns.length > 0) {
-    const last = staffTxns[staffTxns.length - 1];
-    addRow('Est. recurring – contractor payments', last.walletCur, last.debit, 'amb', '/month (based on recent invoices)');
-  }
-  const mktTxns = parsedTxns.filter(t => t.category === 'Marketing');
-  if (mktTxns.length > 0) {
-    const last = mktTxns[mktTxns.length - 1];
-    addRow('Est. recurring – marketing retainer', last.walletCur, last.debit, 'amb', '/month (based on recent payments)');
-  }
-
-  // ── RENDER ──
-  let html = `<thead><tr>
-    <th style="width:38%">Item</th>
-    <th>Currency</th>
-    <th class="num">Opening</th>
-    <th class="num">Closing / Amount</th>
-    <th class="num">Change</th>
-  </tr></thead><tbody>`;
-
-  rows.forEach(r => {
-    if (r.type === 'section') {
-      html += `<tr class="section-row"><td colspan="5">${r.label}</td></tr>`;
-
-    } else if (r.type === 'movement') {
-      const change = r.close - r.open;
-      const chgCls = change >= 0 ? 'pos' : 'neg';
-      const chgSign = change >= 0 ? '+' : '';
-      const arrow = change >= 0 ? '↑' : '↓';
-      html += `<tr style="font-weight:600">
-        <td>${r.cur} wallet</td>
-        <td style="color:var(--ink-3);font-size:12px">${r.cur}</td>
-        <td class="num" style="color:var(--ink-2)">${fmt(r.open)}</td>
-        <td class="num pos">${fmt(r.close)}</td>
-        <td class="num ${chgCls}">${arrow} ${chgSign}${fmt(Math.abs(change))}</td>
-      </tr>`;
-
-    } else if (r.type === 'total') {
-      html += `<tr class="total-row">
-        <td><strong>${r.label}</strong></td>
-        <td><strong>${r.cur}</strong></td>
-        <td class="num">—</td>
-        <td class="num ${r.cls}"><strong>${fmt(r.amt)}</strong></td>
-        <td class="num">—</td>
-      </tr>`;
-
-    } else {
-      // regular row — opening col blank, amount in closing col, change blank
-      const amtDisplay = typeof r.amt === 'number' && r.amt > 0 ? fmt(r.amt) : (r.note || '—');
-      const noteDisplay = (typeof r.amt === 'number' && r.amt > 0 && r.note) ? `<span style="font-size:11px;color:var(--ink-3);margin-left:6px">${r.note}</span>` : '';
-      html += `<tr>
-        <td>${r.label}</td>
-        <td style="color:var(--ink-3);font-size:12px">${r.cur}</td>
-        <td class="num">—</td>
-        <td class="num ${r.cls}">${amtDisplay}${noteDisplay}</td>
-        <td class="num">—</td>
-      </tr>`;
-    }
-  });
-
-  html += '</tbody>';
-  document.getElementById('bs-table').innerHTML = html;
-}
-
-// ── TRANSACTIONS TABLE ──
-function renderTxnTable() {
-  document.getElementById('txn-count').textContent = parsedTxns.length + ' transactions';
-  let html = '<thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Currency</th><th class="num">Debit</th><th class="num">Credit</th><th>Category</th></tr></thead><tbody>';
-  parsedTxns.forEach(t => {
-    const catClass = t.credit > 0 ? 'badge-green' : t.category === 'Bank Fee' ? 'badge-blue' : t.category.includes('Yield') || t.category.includes('FX') ? 'badge-amber' : 'badge-red';
-    html += `<tr>
-      <td style="white-space:nowrap">${t.date}</td>
-      <td style="font-size:11px;color:var(--ink-3)">${t.type}</td>
-      <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.desc}">${t.desc.substring(0,55)}${t.desc.length>55?'…':''}</td>
-      <td>${t.walletCur}</td>
-      <td class="num neg">${t.debit>0?fmt(t.debit):''}</td>
-      <td class="num pos">${t.credit>0?fmt(t.credit):''}</td>
-      <td><span class="badge ${catClass}">${t.category}</span></td>
-    </tr>`;
-  });
-  html += '</tbody>';
-  document.getElementById('txn-table').innerHTML = html;
-}
-
-// ── STATIC INSIGHTS ──
-function renderStaticInsights() {
-  const s = summary;
-  const insights = [];
-
-  // Top client
-  const topClients = Object.entries(s.byClient).sort((a,b)=>b[1]-a[1]);
-  if (topClients.length > 0) {
-    insights.push({ type:'good', label:'Top Revenue Client', finding: `${topClients[0][0]} — SGD ${fmt(topClients[0][1])}`, action: 'This is your anchor client. Maintain the relationship and understand their billing cycle.' });
-  }
-
-  // EasyToRefer
-  const easy = parsedTxns.filter(t => t.desc.toLowerCase().includes('easytorefer'));
-  if (easy.length >= 3) {
-    insights.push({ type:'flag', label:'Recurring Micro-charge', finding: `EasyToRefer charged ${easy.length}× at USD 5.00 each — verify billing cycle`, action: 'Log in to EasyToRefer and confirm if this is weekly billing. If underused, cancel.' });
-  }
-
-  // Yield
-  if (s.usdYield > 0) {
-    insights.push({ type:'good', label:'Yield Strategy', finding: `USD ${fmt(s.usdYield)} parked in yield balance — smart use of idle cash`, action: 'Confirm yield rate. Keep excess USD in yield and draw down as needed.' });
-  }
-
-  // Cambridge
-  const cambridge = parsedTxns.filter(t => t.desc.toLowerCase().includes('cambridge'));
-  if (cambridge.length > 0) {
-    const total = cambridge.reduce((a,t) => a+t.debit, 0);
-    insights.push({ type:'note', label:'Largest Expense', finding: `Cambridge Consolidated — SGD ${fmt(total)} total marketing spend`, action: 'Track marketing ROI monthly. Tie spend to client acquisition numbers.' });
-  }
-
-  // USD income gap
-  if (s.usdIncome < s.usdExpenses) {
-    insights.push({ type:'flag', label:'USD Income Gap', finding: `USD income (${fmt(s.usdIncome)}) < USD expenses (${fmt(s.usdExpenses)})`, action: 'USD wallet relies on SGD→USD FX conversions to fund operations. Monitor FX timing.' });
-  }
-
-  // Dividend
-  const div = parsedTxns.find(t => t.category === 'Director Dividend');
-  if (div) {
-    insights.push({ type:'note', label:'Director Dividend', finding: `USD ${fmt(div.debit)} director dividend paid — ${div.date}`, action: 'Confirm tax treatment with your accountant. Not an operating expense.' });
-  }
-
-  let html = '';
-  insights.forEach(i => {
-    html += `<div class="insight-item ${i.type}"><div class="insight-label">${i.label}</div><div class="insight-finding">${i.finding}</div><div class="insight-action">→ ${i.action}</div></div>`;
-  });
-  document.getElementById('static-insights').innerHTML = html;
-}
-
-// ── AI INSIGHTS ──
-async function generateInsights() {
-  const apiKey = localStorage.getItem('aw_api_key');
-  if (!apiKey) {
-    openSettings();
+  if (results.length === 0) {
+    document.getElementById('loading-section').style.display = 'none';
+    document.getElementById('upload-section').style.display = 'block';
+    alert('Could not read the PDFs. Please check your API key in Settings and try again.');
     return;
   }
 
-  const btn = document.getElementById('ai-btn');
-  const out = document.getElementById('ai-output');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Analyzing with Claude…';
-  out.innerHTML = '<div class="loading-bar"><div class="spinner"></div>Reading transactions and generating CFO-level analysis…</div>';
+  // Sort by currency name
+  results.sort((a, b) => a.currency.localeCompare(b.currency));
 
-  // Build a compact summary for the API
-  const s = summary;
-  const topClients = Object.entries(s.byClient).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k}: SGD ${fmt(v)}`).join(', ');
-  const expCats = Object.entries(s.byCategory).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${fmt(v)}`).join(', ');
-  const months = Object.keys(s.byMonth).sort();
-  const monthlyStr = months.map(m => `${m}: SGD ${fmt(s.byMonth[m].sgd)}, USD ${fmt(s.byMonth[m].usd)}, expenses ~${fmt(s.byMonth[m].expenses)}`).join('\n');
-
-  const prompt = `You are a CFO advisor reviewing Airwallex multi-currency business account data for a Singapore-based digital marketing agency.
-
-PERIOD: ${s.minDate} to ${s.maxDate}
-TOTAL TRANSACTIONS: ${s.txnCount}
-
-REVENUE:
-- SGD income: ${fmt(s.sgdIncome)} (client deposits)
-- USD income: ${fmt(s.usdIncome)} (payin settlements + deposits)
-- GBP income: ${fmt(s.gbpIncome)} (client deposits)
-
-TOP SGD CLIENTS: ${topClients}
-
-MONTHLY BREAKDOWN:
-${monthlyStr}
-
-EXPENSES (by category): ${expCats}
-
-YIELD PARKED: USD ${fmt(s.usdYield)}, GBP ${fmt(s.gbpYield)}
-
-CLOSING BALANCES: ${Object.entries(s.closingBal).map(([c,b])=>`${c} ${fmt(b)}`).join(', ')}
-
-Please provide a concise CFO-level analysis with:
-1. KEY OBSERVATIONS (3–4 points about revenue trends, client concentration, expense patterns)
-2. EXPENSE ANALYSIS (what's consuming the most cash and whether it's justified)
-3. CASH FLOW HEALTH (overall position assessment)
-4. RED FLAGS (anything unusual or worth investigating)
-5. TOP 3 RECOMMENDATIONS (specific, actionable steps this month)
-
-Be direct, specific, and reference actual figures. Plain text, no markdown symbols.`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const text = data.content[0].text;
-    out.innerHTML = `<div class="ai-block"><div class="ai-label">✦ Claude AI Analysis</div>${text}</div>`;
-  } catch (e) {
-    out.innerHTML = `<div class="insight-item flag"><div class="insight-label">Error</div><div class="insight-finding">${e.message}</div><div class="insight-action">→ Check your API key in Settings and try again.</div></div>`;
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#5b9cf6" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="#5b9cf6" stroke-width="1.5" stroke-linecap="round"/></svg> Regenerate analysis';
+  renderResults(results, files);
 }
 
-// ── TABS ──
-function showTab(name) {
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['overview','pl','balance','transactions','insights'][i] === name);
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
   });
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+}
+
+async function extractFromPDF(b64, key) {
+  const prompt = `You are a financial data extractor. Read this Airwallex Account Statement Report PDF carefully.
+
+Extract ALL of the following and respond ONLY with a single valid JSON object — no explanation, no markdown, no backticks:
+
+{
+  "currency": "USD",
+  "period_start": "2026-01-01",
+  "period_end": "2026-06-17",
+  "opening_balance": 17500.39,
+  "closing_balance": 12407.24,
+  "total_credits": 102227.96,
+  "total_debits": 107321.11,
+  "income": [
+    { "date": "2026-01-08", "description": "Batch Settlement bat_20260108_USD_1", "type": "Payin", "amount": 10884.54 }
+  ],
+  "expenses": [
+    { "date": "2026-01-02", "description": "ZAPMAIL.AI", "type": "Card", "amount": 99.00 }
+  ]
+}
+
+Rules:
+- income = all CREDIT transactions (money coming IN)
+- expenses = all DEBIT transactions (money going OUT)
+- Include EVERY transaction listed — do not skip any
+- amounts are always positive numbers
+- date format: YYYY-MM-DD
+- description: use the full description from the PDF
+- type: use the transaction type label from the PDF (Card, Payin, Payout, Fee, Transfer, Conversion, etc.)`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    })
+  });
+
+  const d = await res.json();
+  if (d.error) throw new Error(d.error.message);
+  const text = d.content[0].text.replace(/```json|```/g, '').trim();
+  return JSON.parse(text);
+}
+
+function renderResults(results, files) {
+  document.getElementById('loading-section').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  const dates = results.map(r => `${r.period_start} to ${r.period_end}`);
+  const uniqueDates = [...new Set(dates)];
+  document.getElementById('source-note').textContent =
+    `Generated from ${files.length} official Airwallex ASR PDF${files.length > 1 ? 's' : ''} · Period: ${uniqueDates[0] || ''}`;
+
+  let html = '';
+  results.forEach(r => {
+    const cur = r.currency;
+    const color = CUR_COLOR[cur] || '#1a2b45';
+    const flag = CUR_FLAGS[cur] || '💱';
+    const net = (r.total_credits || 0) - (r.total_debits || 0);
+    const netClass = net >= 0 ? 'profit' : 'loss';
+    const netSign = net >= 0 ? '+' : '';
+
+    // Income rows
+    const incomeRows = (r.income || []).map(t => `
+      <div class="txn-row">
+        <div class="txn-info">
+          <div class="txn-date">${t.date}</div>
+          <div class="txn-desc" title="${t.description}">${t.description}</div>
+          <div class="txn-type">${t.type}</div>
+        </div>
+        <div class="txn-amt credit">+${fmt(t.amount)}</div>
+      </div>`).join('');
+
+    // Expense rows
+    const expenseRows = (r.expenses || []).map(t => `
+      <div class="txn-row">
+        <div class="txn-info">
+          <div class="txn-date">${t.date}</div>
+          <div class="txn-desc" title="${t.description}">${t.description}</div>
+          <div class="txn-type">${t.type}</div>
+        </div>
+        <div class="txn-amt debit">-${fmt(t.amount)}</div>
+      </div>`).join('');
+
+    const totalIncome = (r.income || []).reduce((a, t) => a + t.amount, 0);
+    const totalExpenses = (r.expenses || []).reduce((a, t) => a + t.amount, 0);
+
+    html += `
+    <div class="currency-block">
+
+      <!-- Header: currency name + beginning/ending balance -->
+      <div class="currency-header">
+        <div class="currency-name" style="color:${color}">
+          <span class="cur-flag">${flag}</span> ${cur} Wallet
+        </div>
+        <div class="balance-pills">
+          <div class="bal-pill">
+            <div class="bal-label">Beginning Balance</div>
+            <div class="bal-val neu">${fmt(r.opening_balance, cur)}</div>
+          </div>
+          <div style="display:flex;align-items:center;color:#c8d4e0;font-size:20px">→</div>
+          <div class="bal-pill">
+            <div class="bal-label">Ending Balance</div>
+            <div class="bal-val ${r.closing_balance > 0 ? 'pos' : 'neu'}">${fmt(r.closing_balance, cur)}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Net bar -->
+      <div class="net-bar ${netClass}">
+        <span class="net-label">Period Net (Income – Expenses)</span>
+        <span class="net-val">${netSign}${fmt(Math.abs(net), cur)}</span>
+      </div>
+
+      <!-- Income | Expenses two-column -->
+      <div class="two-col">
+        <div class="col-panel">
+          <div class="col-title income">
+            <span>Income</span>
+            <span class="col-total">${fmt(r.total_credits, cur)}</span>
+          </div>
+          ${incomeRows || '<div class="empty-col">No income transactions</div>'}
+        </div>
+        <div class="col-panel">
+          <div class="col-title expense">
+            <span>Expenses</span>
+            <span class="col-total">${fmt(r.total_debits, cur)}</span>
+          </div>
+          ${expenseRows || '<div class="empty-col">No expense transactions</div>'}
+        </div>
+      </div>
+
+      <!-- Summary row -->
+      <div class="summary-row">
+        <div class="summ-item">
+          <div class="summ-label">Total Income</div>
+          <div class="summ-val" style="color:#0d9e72">${fmt(r.total_credits, cur)}</div>
+        </div>
+        <div class="summ-item">
+          <div class="summ-label">Total Expenses</div>
+          <div class="summ-val" style="color:#d44f2e">${fmt(r.total_debits, cur)}</div>
+        </div>
+        <div class="summ-item">
+          <div class="summ-label">Net</div>
+          <div class="summ-val" style="color:${net>=0?'#0d9e72':'#d44f2e'}">${netSign}${fmt(Math.abs(net), cur)}</div>
+        </div>
+        <div class="summ-item">
+          <div class="summ-label">Opening</div>
+          <div class="summ-val">${fmt(r.opening_balance, cur)}</div>
+        </div>
+        <div class="summ-item">
+          <div class="summ-label">Closing</div>
+          <div class="summ-val" style="color:${r.closing_balance>0?'#0d9e72':'#1a2b45'}">${fmt(r.closing_balance, cur)}</div>
+        </div>
+        <div class="summ-item">
+          <div class="summ-label">Transactions</div>
+          <div class="summ-val">${(r.income||[]).length + (r.expenses||[]).length}</div>
+        </div>
+      </div>
+
+    </div>`;
+  });
+
+  document.getElementById('currency-blocks').innerHTML = html;
 }
 </script>
 </body>
