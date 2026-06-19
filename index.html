@@ -16,14 +16,45 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 
 .main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
 
-/* NOTICE */
-.notice { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 48px 32px; text-align: center; margin-bottom: 24px; }
-.notice-icon { font-size: 36px; margin-bottom: 12px; }
-.notice-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-.notice-sub { font-size: 13px; color: #6b7f94; line-height: 1.7; }
-.notice-sub code { background: #f0f4f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
-.spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #1a5fbf; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 16px; }
+/* PASSWORD SCREEN */
+.pw-screen { min-height: 80vh; display: flex; align-items: center; justify-content: center; }
+.pw-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 48px 40px; width: 380px; max-width: 95vw; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.pw-icon { font-size: 40px; margin-bottom: 16px; }
+.pw-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.pw-sub { font-size: 13px; color: #6b7f94; margin-bottom: 28px; }
+.pw-input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; text-align: center; letter-spacing: 0.1em; margin-bottom: 14px; outline: none; transition: border-color 0.15s; }
+.pw-input:focus { border-color: #1a5fbf; }
+.pw-input.error { border-color: #d44f2e; animation: shake 0.3s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.pw-btn { width: 100%; padding: 12px; background: #1a5fbf; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.pw-btn:hover { opacity: 0.88; }
+.pw-error { font-size: 12px; color: #d44f2e; margin-top: 10px; min-height: 18px; }
+.pw-note { font-size: 11px; color: #b0bfcc; margin-top: 20px; }
+
+/* UPLOAD SCREEN */
+.upload-screen { min-height: 60vh; display: flex; align-items: center; justify-content: center; }
+.upload-card { background: #fff; border-radius: 16px; border: 2px dashed #c8d4e0; padding: 56px 40px; width: 500px; max-width: 95vw; text-align: center; cursor: pointer; transition: all 0.15s; }
+.upload-card:hover, .upload-card.drag { border-color: #1a5fbf; background: #f0f5ff; }
+.upload-card input { display: none; }
+.upload-icon { font-size: 44px; margin-bottom: 14px; }
+.upload-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.upload-sub { font-size: 13px; color: #6b7f94; line-height: 1.7; }
+.upload-sub a { color: #1a5fbf; }
+.upload-pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+.pill { font-size: 11px; padding: 4px 12px; border-radius: 99px; font-weight: 500; }
+.pill-blue { background: #e8f0fd; color: #1a5fbf; }
+.pill-green { background: #e6f7f2; color: #0d9e72; }
+.pill-note { background: #f0f4f9; color: #6b7f94; }
+.logout-btn { font-size: 12px; background: none; border: 1px solid rgba(255,255,255,0.2); color: #c8d4e0; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+.logout-btn:hover { background: rgba(255,255,255,0.1); }
+.new-file-btn { font-size: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #c8d4e0; padding: 5px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; }
+.new-file-btn:hover { background: rgba(255,255,255,0.18); }
+
+/* SPINNER */
+.spinner-screen { min-height: 60vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+.spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #1a5fbf; border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.spinner-msg { font-size: 14px; color: #6b7f94; }
 
 /* METRICS */
 .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 14px; margin-bottom: 24px; }
@@ -34,7 +65,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 .pos { color: #0d9e72; } .neg { color: #d44f2e; } .neu { color: #1a2b45; }
 
 /* TABS */
-.tabs { display: flex; gap: 3px; background: #e2e8f0; border-radius: 10px; padding: 3px; width: fit-content; margin-bottom: 24px; }
+.tabs { display: flex; gap: 3px; background: #e2e8f0; border-radius: 10px; padding: 3px; width: fit-content; margin-bottom: 24px; flex-wrap: wrap; }
 .tab { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: #6b7f94; background: none; border: none; transition: all 0.12s; white-space: nowrap; }
 .tab.active { background: #fff; color: #1a2b45; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .tab-content { display: none; }
@@ -76,7 +107,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 .chart-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7f94; margin-bottom: 14px; }
 .chart-wrap { height: 200px; position: relative; }
 
-/* P&L TABLE */
+/* P&L */
 .pl-card { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 20px; overflow: hidden; }
 .pl-card-title { padding: 14px 22px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
 .pl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -98,11 +129,9 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
 .insight-row:last-child { border-bottom: none; }
 .insight-label { color: #1a2b45; font-weight: 500; }
 .insight-action { font-size: 12px; color: #6b7f94; margin-top: 2px; }
-.insight-val { font-weight: 700; white-space: nowrap; }
 .flag-red { border-left: 3px solid #d44f2e; padding-left: 12px; }
 .flag-green { border-left: 3px solid #0d9e72; padding-left: 12px; }
 .flag-amber { border-left: 3px solid #c07f1a; padding-left: 12px; }
-.section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6b7f94; margin-bottom: 14px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -112,75 +141,138 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; c
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="5" fill="#1a5fbf"/><path d="M4 14l4-8 3 5 2-3 3 6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Radical Marketing <span>Financial Dashboard</span>
   </div>
-  <span class="period-badge" id="period-badge">Loading…</span>
+  <div id="header-actions"></div>
 </header>
 
-<main class="main">
-  <div id="app">
-    <div class="notice">
-      <div class="spinner"></div>
-      <div class="notice-title">Loading dashboard…</div>
-      <div class="notice-sub">Reading <code>transactions.csv</code> from repository</div>
+<main class="main" id="main">
+  <!-- Password screen shown first -->
+  <div class="pw-screen" id="pw-screen">
+    <div class="pw-card">
+      <div class="pw-icon">🔒</div>
+      <div class="pw-title">Financial Dashboard</div>
+      <div class="pw-sub">Enter the password to access Radical Marketing's financial reports</div>
+      <input type="password" class="pw-input" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()">
+      <button class="pw-btn" onclick="checkPassword()">Unlock Dashboard</button>
+      <div class="pw-error" id="pw-error"></div>
+      <div class="pw-note">🔐 All data is processed locally in your browser. Nothing is stored or uploaded.</div>
     </div>
   </div>
 </main>
 
 <script>
-const CSV_URL = 'transactions.csv';
+// ── PASSWORD ──
+// Change this to whatever password you want
+const DASHBOARD_PASSWORD = 'radical2026';
+
+function checkPassword() {
+  const input = document.getElementById('pw-input').value;
+  if (input === DASHBOARD_PASSWORD) {
+    sessionStorage.setItem('aw_auth', '1');
+    showUploadScreen();
+  } else {
+    const el = document.getElementById('pw-input');
+    el.classList.add('error');
+    document.getElementById('pw-error').textContent = 'Incorrect password. Please try again.';
+    setTimeout(() => el.classList.remove('error'), 400);
+    el.value = '';
+    el.focus();
+  }
+}
+
+// Check if already authenticated this session
+if (sessionStorage.getItem('aw_auth') === '1') showUploadScreen();
+
+function showUploadScreen() {
+  document.getElementById('header-actions').innerHTML =
+    `<button class="logout-btn" onclick="logout()">🔒 Lock</button>`;
+  document.getElementById('main').innerHTML = `
+    <div class="upload-screen">
+      <div class="upload-card" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept=".csv">
+        <div class="upload-icon">📊</div>
+        <div class="upload-title">Upload Airwallex CSV</div>
+        <div class="upload-sub">
+          Drop your CSV file here, or <a onclick="event.stopPropagation();document.getElementById('file-input').click()">browse to upload</a><br><br>
+          In Airwallex: <strong>Transactions → Export → CSV</strong>
+        </div>
+        <div class="upload-pills">
+          <span class="pill pill-green">✓ No API key needed</span>
+          <span class="pill pill-blue">✓ Processed locally</span>
+          <span class="pill pill-note">✓ Nothing uploaded anywhere</span>
+        </div>
+      </div>
+    </div>`;
+  wireUpload();
+}
+
+function wireUpload() {
+  const dz = document.getElementById('drop-zone');
+  const fi = document.getElementById('file-input');
+  if (!dz || !fi) return;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+  fi.addEventListener('change', e => handleFile(e.target.files[0]));
+}
+
+function logout() {
+  sessionStorage.removeItem('aw_auth');
+  location.reload();
+}
+
+function handleFile(file) {
+  if (!file) return;
+  document.getElementById('main').innerHTML = `
+    <div class="spinner-screen">
+      <div class="spinner"></div>
+      <div class="spinner-msg">Reading ${file.name}…</div>
+    </div>`;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const txns = parseCSV(e.target.result);
+    if (!txns || txns.length === 0) {
+      showUploadScreen();
+      alert('Could not read the CSV. Make sure it is an Airwallex Balance Activity export.');
+      return;
+    }
+    render(buildData(txns));
+  };
+  reader.readAsText(file);
+}
+
+// ── CSV PARSER ──
 const CUR_FLAGS = { USD:'🇺🇸', SGD:'🇸🇬', GBP:'🇬🇧', AUD:'🇦🇺', EUR:'🇪🇺', HKD:'🇭🇰' };
 const CUR_COLOR = { USD:'#1a5fbf', SGD:'#0d9e72', GBP:'#c07f1a', AUD:'#d44f2e', EUR:'#7c3aed', HKD:'#0891b2' };
 
 function fmt(n) {
-  if (n === null || n === undefined || isNaN(n)) return '—';
-  return Math.abs(n).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
-}
-
-async function loadCSV() {
-  try {
-    const res = await fetch(CSV_URL + '?v=' + Date.now());
-    if (!res.ok) throw new Error('not found');
-    return parseCSV(await res.text());
-  } catch(e) { showError(); return null; }
-}
-
-function showError() {
-  document.getElementById('period-badge').textContent = 'No data';
-  document.getElementById('app').innerHTML = `
-    <div class="notice">
-      <div class="notice-icon">📂</div>
-      <div class="notice-title">No transaction data found</div>
-      <div class="notice-sub">
-        Upload your Airwallex CSV export to this GitHub repository as <code>transactions.csv</code><br><br>
-        In Airwallex: <strong>Transactions → Export → CSV</strong><br>
-        In GitHub: <strong>Add file → Upload files</strong> → rename to <code>transactions.csv</code> → commit
-      </div>
-    </div>`;
+  if (n===null||n===undefined||isNaN(n)) return '—';
+  return Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,'').toLowerCase());
-  const idx = name => headers.findIndex(h => h.includes(name.toLowerCase()));
-  const iTime=idx('time'), iType=idx('type'), iFinType=idx('financial transaction'),
-        iDesc=idx('description'), iWalletCur=idx('wallet currency'),
-        iDebit=idx('debit net'), iCredit=idx('credit net'), iBal=idx('account balance');
+  const headers = lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
+  const idx = name => headers.findIndex(h=>h.includes(name.toLowerCase()));
+  const iTime=idx('time'),iType=idx('type'),iFinType=idx('financial transaction'),
+        iDesc=idx('description'),iWalletCur=idx('wallet currency'),
+        iDebit=idx('debit net'),iCredit=idx('credit net'),iBal=idx('account balance');
 
-  const txns = [];
-  for (let i = 1; i < lines.length; i++) {
+  const txns=[];
+  for (let i=1;i<lines.length;i++) {
     if (!lines[i].trim()) continue;
-    const cols=[]; let inQ=false, cur='';
+    const cols=[]; let inQ=false,cur='';
     for (const ch of lines[i]+',') {
-      if (ch==='"'){inQ=!inQ;}
+      if(ch==='"'){inQ=!inQ;}
       else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
       else cur+=ch;
     }
-    const g = j => j>=0?(cols[j]||'').replace(/^"|"$/g,'').replace(/,/g,'').trim():'';
-    const gn = j => parseFloat(g(j))||0;
-    const dateStr=g(iTime).split('T')[0], month=dateStr.substring(0,7);
-    const type=g(iType), finType=g(iFinType), desc=g(iDesc), walletCur=g(iWalletCur);
-    const debit=gn(iDebit), credit=gn(iCredit), balance=gn(iBal);
-    if (!dateStr||!walletCur) continue;
+    const g=j=>j>=0?(cols[j]||'').replace(/^"|"$/g,'').replace(/,/g,'').trim():'';
+    const gn=j=>parseFloat(g(j))||0;
+    const dateStr=g(iTime).split('T')[0],month=dateStr.substring(0,7);
+    const type=g(iType),finType=g(iFinType),desc=g(iDesc),walletCur=g(iWalletCur);
+    const debit=gn(iDebit),credit=gn(iCredit),balance=gn(iBal);
+    if(!dateStr||!walletCur) continue;
 
     let category='Other';
     const dl=desc.toLowerCase();
@@ -214,17 +306,12 @@ function buildData(txns) {
   const maxDate=txns.reduce((a,t)=>(!a||t.date>a)?t.date:a,'');
   const openingBal=txns._openingBal||{};
   const closingBal={};
-  txns.forEach(t=>{ if(t.balance>0) closingBal[t.walletCur]=t.balance; });
-
+  txns.forEach(t=>{if(t.balance>0) closingBal[t.walletCur]=t.balance;});
   const byCur={};
   currencies.forEach(cur=>{
     const ct=txns.filter(t=>t.walletCur===cur);
     const noFX=t=>!['Yield Transfer','FX Conversion'].includes(t.category);
-    byCur[cur]={
-      income: ct.filter(t=>t.credit>0&&noFX(t)),
-      expenses: ct.filter(t=>t.debit>0&&noFX(t)),
-      all: ct
-    };
+    byCur[cur]={income:ct.filter(t=>t.credit>0&&noFX(t)),expenses:ct.filter(t=>t.debit>0&&noFX(t))};
   });
   return {currencies,minDate,maxDate,openingBal,closingBal,byCur,txns};
 }
@@ -236,9 +323,12 @@ function showTab(name) {
 
 function render(data) {
   const {currencies,minDate,maxDate,openingBal,closingBal,byCur,txns}=data;
-  document.getElementById('period-badge').textContent=`${minDate} → ${maxDate}`;
 
-  // ── TOTALS ──
+  document.getElementById('period-badge') && (document.getElementById('period-badge').textContent=`${minDate} → ${maxDate}`);
+  document.getElementById('header-actions').innerHTML=`
+    <button class="new-file-btn" onclick="showUploadScreen()">↑ New file</button>
+    <button class="logout-btn" onclick="logout()">🔒 Lock</button>`;
+
   const sgdInc=txns.filter(t=>t.walletCur==='SGD'&&t.credit>0&&t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
   const usdInc=txns.filter(t=>t.walletCur==='USD'&&t.credit>0&&t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
   const gbpInc=txns.filter(t=>t.walletCur==='GBP'&&t.credit>0&&t.category.startsWith('Revenue')).reduce((a,t)=>a+t.credit,0);
@@ -246,7 +336,6 @@ function render(data) {
   const usdExp=txns.filter(t=>t.walletCur==='USD'&&t.debit>0&&!['Yield Transfer','FX Conversion'].includes(t.category)).reduce((a,t)=>a+t.debit,0);
   const usdYield=txns.filter(t=>t.walletCur==='USD'&&t.category==='Yield Transfer').reduce((a,t)=>a+t.debit,0);
 
-  // ── METRICS ──
   const metricsHtml=`<div class="metrics-grid">
     <div class="metric"><div class="metric-label">SGD Income</div><div class="metric-value pos">SGD ${fmt(sgdInc)}</div><div class="metric-sub">Client deposits</div></div>
     <div class="metric"><div class="metric-label">USD Income</div><div class="metric-value pos">USD ${fmt(usdInc)}</div><div class="metric-sub">Payins & deposits</div></div>
@@ -256,7 +345,6 @@ function render(data) {
     <div class="metric"><div class="metric-label">In Yield</div><div class="metric-value neu">USD ${fmt(usdYield)}</div><div class="metric-sub">Parked, earning interest</div></div>
   </div>`;
 
-  // ── TABS ──
   const tabsHtml=`<div class="tabs">
     <button class="tab active" data-tab="overview" onclick="showTab('overview')">Overview</button>
     <button class="tab" data-tab="details" onclick="showTab('details')">Income & Expenses</button>
@@ -264,7 +352,7 @@ function render(data) {
     <button class="tab" data-tab="insights" onclick="showTab('insights')">Insights</button>
   </div>`;
 
-  // ── OVERVIEW TAB ──
+  // OVERVIEW
   const overviewHtml=`<div class="tab-content active" id="tab-overview">
     <div class="charts-row">
       <div class="chart-card"><div class="chart-title">Income by Month</div><div class="chart-wrap"><canvas id="chart-monthly"></canvas></div></div>
@@ -272,21 +360,19 @@ function render(data) {
     </div>
     <div class="charts-row">
       <div class="chart-card"><div class="chart-title">Revenue by Client (SGD)</div><div class="chart-wrap"><canvas id="chart-clients"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Wallet Closing Balances</div><div class="chart-wrap"><canvas id="chart-bal"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Wallet Balances</div><div class="chart-wrap"><canvas id="chart-bal"></canvas></div></div>
     </div>
   </div>`;
 
-  // ── INCOME & EXPENSES TAB ──
+  // INCOME & EXPENSES
   let detailsHtml='<div class="tab-content" id="tab-details">';
   currencies.forEach(cur=>{
-    const flag=CUR_FLAGS[cur]||'💱', color=CUR_COLOR[cur]||'#1a2b45';
-    const open=openingBal[cur]?openingBal[cur].opening:0, close=closingBal[cur]||0;
+    const flag=CUR_FLAGS[cur]||'💱',color=CUR_COLOR[cur]||'#1a2b45';
+    const open=openingBal[cur]?openingBal[cur].opening:0,close=closingBal[cur]||0;
     const {income,expenses}=byCur[cur];
     const totalIn=income.reduce((a,t)=>a+t.credit,0);
     const totalOut=expenses.reduce((a,t)=>a+t.debit,0);
-    const net=totalIn-totalOut;
-    const nc=net>=0?'pos-bg':'neg-bg', ncolor=net>=0?'#0d9e72':'#d44f2e';
-    const ns=net>=0?'+':'-';
+    const net=totalIn-totalOut,nc=net>=0?'pos-bg':'neg-bg',ncolor=net>=0?'#0d9e72':'#d44f2e',ns=net>=0?'+':'-';
     const incRows=income.map(t=>`<div class="txn"><div class="txn-left"><div class="txn-date">${t.date}</div><div class="txn-desc" title="${t.desc}">${t.desc.substring(0,60)}${t.desc.length>60?'…':''}</div><div class="txn-cat">${t.category}</div></div><div class="txn-amt c">+${fmt(t.credit)}</div></div>`).join('');
     const expRows=expenses.map(t=>`<div class="txn"><div class="txn-left"><div class="txn-date">${t.date}</div><div class="txn-desc" title="${t.desc}">${t.desc.substring(0,60)}${t.desc.length>60?'…':''}</div><div class="txn-cat">${t.category}</div></div><div class="txn-amt d">-${fmt(t.debit)}</div></div>`).join('');
     detailsHtml+=`<div class="cur-block">
@@ -314,180 +400,77 @@ function render(data) {
   });
   detailsHtml+='</div>';
 
-  // ── P&L TAB ──
-  // Build P&L per currency
+  // P&L
   let plHtml='<div class="tab-content" id="tab-pl">';
   currencies.forEach(cur=>{
-    const flag=CUR_FLAGS[cur]||'💱', color=CUR_COLOR[cur]||'#1a2b45';
+    const flag=CUR_FLAGS[cur]||'💱',color=CUR_COLOR[cur]||'#1a2b45';
     const {income,expenses}=byCur[cur];
-
-    // Group income by description
     const incGroups={};
-    income.forEach(t=>{
-      const k=t.desc.substring(0,50);
-      if(!incGroups[k]) incGroups[k]={desc:t.desc,cat:t.category,total:0,count:0};
-      incGroups[k].total+=t.credit; incGroups[k].count++;
-    });
-
-    // Group expenses by category
+    income.forEach(t=>{const k=t.desc.substring(0,50);if(!incGroups[k])incGroups[k]={desc:t.desc,total:0,count:0};incGroups[k].total+=t.credit;incGroups[k].count++;});
     const expGroups={};
-    expenses.forEach(t=>{
-      const k=t.category;
-      if(!expGroups[k]) expGroups[k]={items:[],total:0};
-      expGroups[k].total+=t.debit;
-      expGroups[k].items.push(t);
-    });
-
+    expenses.forEach(t=>{const k=t.category;if(!expGroups[k])expGroups[k]={items:[],total:0};expGroups[k].total+=t.debit;expGroups[k].items.push(t);});
     const totalInc=income.reduce((a,t)=>a+t.credit,0);
     const totalExp=expenses.reduce((a,t)=>a+t.debit,0);
-    const net=totalInc-totalExp;
-    const netColor=net>=0?'#0d9e72':'#d44f2e';
-
-    let rows='';
-    // Revenue rows
-    rows+=`<tr class="pl-sec"><td colspan="2">Revenue</td></tr>`;
+    const net=totalInc-totalExp,netColor=net>=0?'#0d9e72':'#d44f2e';
+    let rows=`<tr class="pl-sec"><td colspan="2">Revenue</td></tr>`;
     Object.values(incGroups).sort((a,b)=>b.total-a.total).forEach(g=>{
       rows+=`<tr><td style="padding-left:32px">${g.desc.substring(0,60)}${g.desc.length>60?'…':''} ${g.count>1?`<span style="font-size:10px;color:#9aabbc">(×${g.count})</span>`:''}</td><td style="color:#0d9e72">${cur} ${fmt(g.total)}</td></tr>`;
     });
     rows+=`<tr class="pl-total"><td>Total Revenue</td><td style="color:#0d9e72">${cur} ${fmt(totalInc)}</td></tr>`;
-
-    // Expense rows grouped by category
     rows+=`<tr class="pl-sec"><td colspan="2">Expenses</td></tr>`;
     Object.entries(expGroups).sort((a,b)=>b[1].total-a[1].total).forEach(([cat,g])=>{
       rows+=`<tr><td style="padding-left:16px;font-weight:600;font-size:12px;color:#3a4a5c">${cat}</td><td></td></tr>`;
-      g.items.forEach(t=>{
-        rows+=`<tr><td style="padding-left:32px;font-size:12px">${t.desc.substring(0,55)}${t.desc.length>55?'…':''}<span style="font-size:10px;color:#9aabbc;margin-left:6px">${t.date}</span></td><td style="color:#d44f2e">${cur} ${fmt(t.debit)}</td></tr>`;
-      });
+      g.items.forEach(t=>{rows+=`<tr><td style="padding-left:32px;font-size:12px">${t.desc.substring(0,55)}${t.desc.length>55?'…':''}<span style="font-size:10px;color:#9aabbc;margin-left:6px">${t.date}</span></td><td style="color:#d44f2e">${cur} ${fmt(t.debit)}</td></tr>`;});
       rows+=`<tr style="background:#fff8f8"><td style="padding-left:32px;font-size:11px;color:#9aabbc">Subtotal – ${cat}</td><td style="color:#d44f2e;font-size:12px">${cur} ${fmt(g.total)}</td></tr>`;
     });
     rows+=`<tr class="pl-total"><td>Total Expenses</td><td style="color:#d44f2e">${cur} ${fmt(totalExp)}</td></tr>`;
     rows+=`<tr class="pl-net"><td>NET PROFIT / LOSS</td><td style="color:${netColor}">${net>=0?'+':'–'}${cur} ${fmt(Math.abs(net))}</td></tr>`;
-
     plHtml+=`<div class="pl-card">
-      <div class="pl-card-title">
-        <span style="color:${color}">${flag} ${cur} — Profit & Loss</span>
-        <span style="font-size:12px;font-weight:400;color:#6b7f94">${minDate} → ${maxDate}</span>
-      </div>
-      <table class="pl-table">
-        <thead><tr><th style="width:65%">Description</th><th>Amount</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <div class="pl-card-title"><span style="color:${color}">${flag} ${cur} — Profit & Loss</span><span style="font-size:12px;font-weight:400;color:#6b7f94">${minDate} → ${maxDate}</span></div>
+      <table class="pl-table"><thead><tr><th style="width:65%">Description</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table>
     </div>`;
   });
   plHtml+='</div>';
 
-  // ── INSIGHTS TAB ──
-  // Auto-generate insights from data
+  // INSIGHTS
   const insights=[];
-
-  // Top SGD client
   const sgdClients={};
-  txns.filter(t=>t.walletCur==='SGD'&&t.credit>0&&t.category.startsWith('Revenue')).forEach(t=>{
-    const k=t.desc.split('|')[0].trim().substring(0,40);
-    sgdClients[k]=(sgdClients[k]||0)+t.credit;
-  });
+  txns.filter(t=>t.walletCur==='SGD'&&t.credit>0&&t.category.startsWith('Revenue')).forEach(t=>{const k=t.desc.split('|')[0].trim().substring(0,40);sgdClients[k]=(sgdClients[k]||0)+t.credit;});
   const topClient=Object.entries(sgdClients).sort((a,b)=>b[1]-a[1])[0];
-  if(topClient) insights.push({type:'good',icon:'🏆',title:'Top SGD Client',finding:`${topClient[0]} — SGD ${fmt(topClient[1])}`,action:'Highest revenue client. Prioritise relationship and confirm next billing cycle.'});
-
-  // Cambridge marketing cost
+  if(topClient) insights.push({type:'good',icon:'🏆',title:'Top SGD Client',finding:`${topClient[0]} — SGD ${fmt(topClient[1])}`,action:'Highest revenue client. Prioritise this relationship.'});
   const cambridge=txns.filter(t=>t.desc.toLowerCase().includes('cambridge'));
-  if(cambridge.length>0){
-    const total=cambridge.reduce((a,t)=>a+t.debit,0);
-    const pct=sgdInc>0?Math.round(total/sgdInc*100):0;
-    insights.push({type:'amber',icon:'📢',title:'Marketing Spend',finding:`Cambridge Consolidated — SGD ${fmt(total)} total (${pct}% of SGD revenue)`,action:'Track ROI monthly. Tie spend to client acquisition numbers.'});
-  }
-
-  // EasyToRefer
+  if(cambridge.length>0){const total=cambridge.reduce((a,t)=>a+t.debit,0);const pct=sgdInc>0?Math.round(total/sgdInc*100):0;insights.push({type:'amber',icon:'📢',title:'Marketing Spend',finding:`Cambridge Consolidated — SGD ${fmt(total)} (${pct}% of SGD revenue)`,action:'Track ROI monthly. Tie spend to client acquisition numbers.'});}
   const easy=txns.filter(t=>t.desc.toLowerCase().includes('easytorefer'));
-  if(easy.length>=3) insights.push({type:'flag',icon:'⚠️',title:'Recurring Micro-charge',finding:`EasyToRefer charged ${easy.length}× at USD 5.00 each = USD ${fmt(easy.length*5)}`,action:'Log in and confirm billing cycle. If weekly and underused, cancel.'});
-
-  // USD income gap
-  if(usdInc<usdExp) insights.push({type:'flag',icon:'💸',title:'USD Income Gap',finding:`USD income (${fmt(usdInc)}) is less than USD expenses (${fmt(usdExp)})`,action:'USD wallet relies on FX conversions from SGD to cover operations. Monitor monthly.'});
-
-  // Yield
-  if(usdYield>0) insights.push({type:'good',icon:'📈',title:'Yield Strategy',finding:`USD ${fmt(usdYield)} parked in Airwallex Yield — earning passive interest`,action:'At ~4.5% annual rate, this earns approx. USD '+fmt(usdYield*0.045/12)+'/month. Keep excess USD in yield.'});
-
-  // SGD net
+  if(easy.length>=3) insights.push({type:'flag',icon:'⚠️',title:'Recurring Micro-charge',finding:`EasyToRefer charged ${easy.length}× = USD ${fmt(easy.length*5)}`,action:'Confirm billing cycle. If weekly and underused, cancel.'});
+  if(usdInc<usdExp) insights.push({type:'flag',icon:'💸',title:'USD Income Gap',finding:`USD income (${fmt(usdInc)}) < USD expenses (${fmt(usdExp)})`,action:'USD wallet relies on SGD→USD FX conversions. Monitor monthly.'});
+  if(usdYield>0) insights.push({type:'good',icon:'📈',title:'Yield Strategy',finding:`USD ${fmt(usdYield)} parked in Airwallex Yield`,action:'Earning ~USD '+fmt(usdYield*0.045/12)+'/month at 4.5% annual rate.'});
   const sgdNet=sgdInc-sgdExp;
-  if(sgdNet>0) insights.push({type:'good',icon:'✅',title:'SGD Cash Flow',finding:`SGD net position is +SGD ${fmt(sgdNet)} after all operating expenses`,action:'Strong SGD position. Ensure Cambridge retainer is tracked against client growth.'});
-
-  // Staff cost
+  if(sgdNet>0) insights.push({type:'good',icon:'✅',title:'SGD Cash Flow',finding:`Net SGD position: +SGD ${fmt(sgdNet)}`,action:'Strong SGD position. Monitor Cambridge retainer ROI.'});
   const staff=txns.filter(t=>t.category==='Staff / Contractor');
-  if(staff.length>0){
-    const stTotal=staff.reduce((a,t)=>a+t.debit,0);
-    insights.push({type:'info',icon:'👥',title:'Staff / Contractor Costs',finding:`Total USD ${fmt(stTotal)} across ${staff.length} payments`,action:'Predictable monthly cost. Budget as fixed expense in cash flow planning.'});
-  }
+  if(staff.length>0){const stTotal=staff.reduce((a,t)=>a+t.debit,0);insights.push({type:'info',icon:'👥',title:'Staff / Contractor Costs',finding:`USD ${fmt(stTotal)} across ${staff.length} payments`,action:'Predictable monthly cost. Budget as fixed expense.'});}
 
-  const typeIcon={good:'good',flag:'flag',amber:'amber',info:'good'};
-  const insightRows=insights.map(i=>`
-    <div class="insight-card">
-      <div class="ic-header flag-${i.type==='flag'?'red':i.type==='amber'?'amber':'green'}">
-        <span>${i.icon}</span> ${i.title}
-      </div>
-      <div class="ic-body">
-        <div class="insight-row">
-          <div><div class="insight-label">${i.finding}</div><div class="insight-action">→ ${i.action}</div></div>
-        </div>
-      </div>
-    </div>`).join('');
+  const balSummary=currencies.map(cur=>{const close=closingBal[cur]||0;return `<div class="insight-row"><div class="insight-label">${CUR_FLAGS[cur]||''} ${cur} wallet</div><div style="font-weight:700;color:${close>0?'#0d9e72':'#1a2b45'}">${cur} ${fmt(close)}</div></div>`;}).join('');
+  const insightRows=insights.map(i=>`<div class="insight-card"><div class="ic-header flag-${i.type==='flag'?'red':i.type==='amber'?'amber':'green'}">${i.icon} ${i.title}</div><div class="ic-body"><div class="insight-row"><div><div class="insight-label">${i.finding}</div><div class="insight-action">→ ${i.action}</div></div></div></div></div>`).join('');
+  const insightsHtml=`<div class="tab-content" id="tab-insights"><div class="insight-card"><div class="ic-header">💰 Current Wallet Balances</div><div class="ic-body">${balSummary}</div></div>${insightRows}</div>`;
 
-  // Closing balance summary for insights
-  const balSummary=currencies.map(cur=>{
-    const close=closingBal[cur]||0;
-    return `<div class="insight-row"><div class="insight-label">${CUR_FLAGS[cur]||''} ${cur} wallet</div><div class="insight-val ${close>0?'pos':'neu'}">${cur} ${fmt(close)}</div></div>`;
-  }).join('');
+  document.getElementById('main').innerHTML = `<div style="padding:28px 20px 80px;max-width:1100px;margin:0 auto">${metricsHtml}${tabsHtml}${overviewHtml}${detailsHtml}${plHtml}${insightsHtml}</div>`;
 
-  const insightsHtml=`<div class="tab-content" id="tab-insights">
-    <div class="insight-card">
-      <div class="ic-header">💰 Current Wallet Balances</div>
-      <div class="ic-body">${balSummary}</div>
-    </div>
-    ${insightRows}
-  </div>`;
-
-  // ── ASSEMBLE ──
-  document.getElementById('app').innerHTML = metricsHtml + tabsHtml + overviewHtml + detailsHtml + plHtml + insightsHtml;
-
-  // ── CHARTS ──
-  // Monthly income
+  // CHARTS
   const months={};
-  txns.forEach(t=>{
-    if(!t.credit||!t.category.startsWith('Revenue')) return;
-    if(!months[t.month]) months[t.month]={SGD:0,USD:0,GBP:0};
-    months[t.month][t.walletCur]=(months[t.month][t.walletCur]||0)+t.credit;
-  });
+  txns.forEach(t=>{if(!t.credit||!t.category.startsWith('Revenue'))return;if(!months[t.month])months[t.month]={SGD:0,USD:0,GBP:0};months[t.month][t.walletCur]=(months[t.month][t.walletCur]||0)+t.credit;});
   const mL=Object.keys(months).sort();
-  new Chart(document.getElementById('chart-monthly'),{type:'bar',data:{labels:mL,datasets:[
-    {label:'SGD',data:mL.map(m=>months[m].SGD||0),backgroundColor:'#0d9e72'},
-    {label:'USD',data:mL.map(m=>months[m].USD||0),backgroundColor:'#1a5fbf'},
-    {label:'GBP',data:mL.map(m=>months[m].GBP||0),backgroundColor:'#c07f1a'},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f9'}}}}});
-
-  // USD expense breakdown
+  new Chart(document.getElementById('chart-monthly'),{type:'bar',data:{labels:mL,datasets:[{label:'SGD',data:mL.map(m=>months[m].SGD||0),backgroundColor:'#0d9e72'},{label:'USD',data:mL.map(m=>months[m].USD||0),backgroundColor:'#1a5fbf'},{label:'GBP',data:mL.map(m=>months[m].GBP||0),backgroundColor:'#c07f1a'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f9'}}}}});
   const expCats={};
-  txns.filter(t=>t.walletCur==='USD'&&t.debit>0&&!['Yield Transfer','FX Conversion'].includes(t.category))
-      .forEach(t=>{expCats[t.category]=(expCats[t.category]||0)+t.debit;});
+  txns.filter(t=>t.walletCur==='USD'&&t.debit>0&&!['Yield Transfer','FX Conversion'].includes(t.category)).forEach(t=>{expCats[t.category]=(expCats[t.category]||0)+t.debit;});
   const expE=Object.entries(expCats).sort((a,b)=>b[1]-a[1]);
   new Chart(document.getElementById('chart-exp'),{type:'doughnut',data:{labels:expE.map(e=>e[0]),datasets:[{data:expE.map(e=>e[1]),backgroundColor:['#1a5fbf','#0d9e72','#d44f2e','#c07f1a','#7c3aed','#0891b2','#9aabbc'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}});
-
-  // SGD clients
   const clients={};
-  txns.filter(t=>t.walletCur==='SGD'&&t.credit>0&&t.category.startsWith('Revenue')).forEach(t=>{
-    const k=t.desc.split('|')[0].trim().substring(0,25);
-    clients[k]=(clients[k]||0)+t.credit;
-  });
+  txns.filter(t=>t.walletCur==='SGD'&&t.credit>0&&t.category.startsWith('Revenue')).forEach(t=>{const k=t.desc.split('|')[0].trim().substring(0,25);clients[k]=(clients[k]||0)+t.credit;});
   const cE=Object.entries(clients).sort((a,b)=>b[1]-a[1]).slice(0,6);
   new Chart(document.getElementById('chart-clients'),{type:'bar',data:{labels:cE.map(e=>e[0]),datasets:[{data:cE.map(e=>e[1]),backgroundColor:'#0d9e72'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f4f9'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
-
-  // Wallet balances
   const balCurs=currencies.filter(c=>closingBal[c]>0);
-  new Chart(document.getElementById('chart-bal'),{type:'bar',data:{labels:balCurs,datasets:[
-    {label:'Opening',data:balCurs.map(c=>openingBal[c]?openingBal[c].opening:0),backgroundColor:'#c8d4e0'},
-    {label:'Closing',data:balCurs.map(c=>closingBal[c]||0),backgroundColor:balCurs.map(c=>CUR_COLOR[c]||'#1a5fbf')},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f9'}}}}});
+  new Chart(document.getElementById('chart-bal'),{type:'bar',data:{labels:balCurs,datasets:[{label:'Opening',data:balCurs.map(c=>openingBal[c]?openingBal[c].opening:0),backgroundColor:'#c8d4e0'},{label:'Closing',data:balCurs.map(c=>closingBal[c]||0),backgroundColor:balCurs.map(c=>CUR_COLOR[c]||'#1a5fbf')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f9'}}}}});
 }
-
-loadCSV().then(txns=>{ if(txns) render(buildData(txns)); });
 </script>
 </body>
 </html>
