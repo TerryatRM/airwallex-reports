@@ -178,8 +178,17 @@ function checkPassword() {
   }
 }
 
-// Check if already authenticated this session
-if (sessionStorage.getItem('aw_auth') === '1') showUploadScreen();
+// Always show password screen on every fresh page load
+// Only skip if already authenticated in this tab session
+if (sessionStorage.getItem('aw_auth') === '1') {
+  showUploadScreen();
+} else {
+  // Make sure password screen is visible and focused
+  document.addEventListener('DOMContentLoaded', () => {
+    const pw = document.getElementById('pw-input');
+    if (pw) pw.focus();
+  });
+}
 
 function showUploadScreen() {
   document.getElementById('header-actions').innerHTML =
@@ -216,7 +225,20 @@ function wireUpload() {
 
 function logout() {
   sessionStorage.removeItem('aw_auth');
-  location.reload();
+  document.getElementById('main').innerHTML = `
+    <div class="pw-screen" id="pw-screen">
+      <div class="pw-card">
+        <div class="pw-icon">🔒</div>
+        <div class="pw-title">Financial Dashboard</div>
+        <div class="pw-sub">Enter the password to access Radical Marketing's financial reports</div>
+        <input type="password" class="pw-input" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()">
+        <button class="pw-btn" onclick="checkPassword()">Unlock Dashboard</button>
+        <div class="pw-error" id="pw-error"></div>
+        <div class="pw-note">🔐 All data is processed locally in your browser. Nothing is stored or uploaded.</div>
+      </div>
+    </div>`;
+  document.getElementById('header-actions').innerHTML = '';
+  setTimeout(() => { const pw = document.getElementById('pw-input'); if(pw) pw.focus(); }, 50);
 }
 
 function handleFile(file) {
