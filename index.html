@@ -162,7 +162,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f4f6f9;color:#1a
 const PWD = 'radical2026';
 const CUR_FLAGS = {USD:'🇺🇸',SGD:'🇸🇬',GBP:'🇬🇧',AUD:'🇦🇺',EUR:'🇪🇺',HKD:'🇭🇰'};
 const CUR_COLOR = {USD:'#1a5fbf',SGD:'#0d9e72',GBP:'#c07f1a',AUD:'#d44f2e',EUR:'#7c3aed',HKD:'#0891b2'};
-const DEF_RATES = {USD:1,SGD:0.756,GBP:1.27,AUD:0.645,HKD:0.128,EUR:1.09};
+const DEF_RATES = {USD:1,SGD:0.7732,GBP:1.3237,AUD:0.7016,HKD:0.1277,EUR:1.1560};
 
 function fmt(n){
   if(n===null||n===undefined||isNaN(n))return'—';
@@ -361,8 +361,26 @@ function renderDash(d){
     const {inc,exp}=bc[c];
     const tI=inc.reduce((a,t)=>a+t.cre,0),tE=exp.reduce((a,t)=>a+t.deb,0);
     const net=tI-tE,nc=net>=0?'pos-bg':'neg-bg',ncol=net>=0?'#0d9e72':'#d44f2e',ns=net>=0?'+':'-';
+
+    // Non-operating movements for this currency
+    const allCurTxns=txns.filter(t=>t.cur===c);
+    const yieldOut=allCurTxns.filter(t=>t.cat==='Yield Transfer'&&t.deb>0).reduce((a,t)=>a+t.deb,0);
+    const yieldIn=allCurTxns.filter(t=>t.cat==='Yield Transfer'&&t.cre>0).reduce((a,t)=>a+t.cre,0);
+    const fxOut=allCurTxns.filter(t=>t.cat==='FX Conversion'&&t.deb>0).reduce((a,t)=>a+t.deb,0);
+    const fxIn=allCurTxns.filter(t=>t.cat==='FX Conversion'&&t.cre>0).reduce((a,t)=>a+t.cre,0);
+    const totalMove=(tI-tE)+(yieldIn-yieldOut)+(fxIn-fxOut);
+    const reconCheck=Math.abs((op+totalMove)-cl)<0.02;
+
+    // Non-operating rows for footer
+    let nonOpHtml='';
+    if(yieldOut>0) nonOpHtml+=`<div class="ft-item"><div class="ft-lbl">Yield Transfer Out</div><div class="ft-v" style="color:#c07f1a">−${c} ${fmt(yieldOut)}</div></div>`;
+    if(yieldIn>0)  nonOpHtml+=`<div class="ft-item"><div class="ft-lbl">Yield Transfer In</div><div class="ft-v pos">+${c} ${fmt(yieldIn)}</div></div>`;
+    if(fxOut>0)    nonOpHtml+=`<div class="ft-item"><div class="ft-lbl">FX Conversion Out</div><div class="ft-v" style="color:#c07f1a">−${c} ${fmt(fxOut)}</div></div>`;
+    if(fxIn>0)     nonOpHtml+=`<div class="ft-item"><div class="ft-lbl">FX Conversion In</div><div class="ft-v pos">+${c} ${fmt(fxIn)}</div></div>`;
+
     const iRows=inc.map(t=>`<div class="txn"><div class="tl"><div class="td">${t.date}</div><div class="tn" title="${t.desc}">${t.desc.substring(0,60)}${t.desc.length>60?'…':''}</div><div class="tcat">${t.cat}</div></div><div class="ta c">+${fmt(t.cre)}</div></div>`).join('');
     const eRows=exp.map(t=>`<div class="txn"><div class="tl"><div class="td">${t.date}</div><div class="tn" title="${t.desc}">${t.desc.substring(0,60)}${t.desc.length>60?'…':''}</div><div class="tcat">${t.cat}</div></div><div class="ta d">-${fmt(t.deb)}</div></div>`).join('');
+
     detail+=`<div class="card">
       <div class="cur-hdr"><div class="cur-title" style="color:${color}">${flag} ${c} Wallet</div>
         <div class="bals">
@@ -371,7 +389,7 @@ function renderDash(d){
           <div class="bal-item"><div class="bal-lbl">Ending Balance</div><div class="bal-v ${cl>0?'pos':'neu'}">${c} ${fmt(cl)}</div></div>
         </div>
       </div>
-      <div class="net-bar ${nc}"><span style="font-weight:600">Period Net</span><span style="font-size:15px;font-weight:700;color:${ncol}">${ns}${c} ${fmt(Math.abs(net))}</span></div>
+      <div class="net-bar ${nc}"><span style="font-weight:600">Operating Net (Income – Expenses)</span><span style="font-size:15px;font-weight:700;color:${ncol}">${ns}${c} ${fmt(Math.abs(net))}</span></div>
       <div class="two-col">
         <div class="col-pane"><div class="col-hd inc"><span>Income (${inc.length})</span><span>${c} ${fmt(tI)}</span></div>${iRows||'<div class="empty">No income</div>'}</div>
         <div class="col-pane"><div class="col-hd exp"><span>Expenses (${exp.length})</span><span>${c} ${fmt(tE)}</span></div>${eRows||'<div class="empty">No expenses</div>'}</div>
@@ -379,9 +397,15 @@ function renderDash(d){
       <div class="cur-ft">
         <div class="ft-item"><div class="ft-lbl">Total Income</div><div class="ft-v pos">${c} ${fmt(tI)}</div></div>
         <div class="ft-item"><div class="ft-lbl">Total Expenses</div><div class="ft-v neg">${c} ${fmt(tE)}</div></div>
-        <div class="ft-item"><div class="ft-lbl">Net</div><div class="ft-v" style="color:${ncol}">${ns}${c} ${fmt(Math.abs(net))}</div></div>
-        <div class="ft-item"><div class="ft-lbl">Opening</div><div class="ft-v">${c} ${fmt(op)}</div></div>
-        <div class="ft-item"><div class="ft-lbl">Closing</div><div class="ft-v ${cl>0?'pos':'neu'}">${c} ${fmt(cl)}</div></div>
+        <div class="ft-item"><div class="ft-lbl">Operating Net</div><div class="ft-v" style="color:${ncol}">${ns}${c} ${fmt(Math.abs(net))}</div></div>
+        ${nonOpHtml}
+        <div class="ft-item" style="border-left:2px solid #e2e8f0;padding-left:14px;margin-left:4px">
+          <div class="ft-lbl">Opening</div><div class="ft-v">${c} ${fmt(op)}</div>
+        </div>
+        <div class="ft-item">
+          <div class="ft-lbl">Closing</div><div class="ft-v ${cl>0?'pos':'neu'}">${c} ${fmt(cl)}</div>
+        </div>
+        ${reconCheck?`<div class="ft-item"><div class="ft-lbl">Reconciled</div><div class="ft-v" style="color:#0d9e72;font-size:12px">✓ Balanced</div></div>`:`<div class="ft-item"><div class="ft-lbl">Reconciled</div><div class="ft-v" style="color:#9aabbc;font-size:11px">~Est. balances</div></div>`}
       </div>
     </div>`;
   });
