@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radical Marketing – Financial Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; color: #1a2b45; font-size: 14px; }
@@ -628,7 +627,8 @@ function render(data) {
   // Trigger initial USD calculation after DOM is ready
   setTimeout(() => recalcUSD(), 50);
 
-  // CHARTS
+  // CHARTS — load Chart.js lazily then draw
+  function drawCharts() {
   const months={};
   txns.forEach(t=>{if(!t.credit||!t.category.startsWith('Revenue'))return;if(!months[t.month])months[t.month]={SGD:0,USD:0,GBP:0};months[t.month][t.walletCur]=(months[t.month][t.walletCur]||0)+t.credit;});
   const mL=Object.keys(months).sort();
@@ -643,6 +643,16 @@ function render(data) {
   new Chart(document.getElementById('chart-clients'),{type:'bar',data:{labels:cE.map(e=>e[0]),datasets:[{data:cE.map(e=>e[1]),backgroundColor:'#0d9e72'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f4f9'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
   const balCurs=currencies.filter(c=>closingBal[c]>0);
   new Chart(document.getElementById('chart-bal'),{type:'bar',data:{labels:balCurs,datasets:[{label:'Opening',data:balCurs.map(c=>openingBal[c]?openingBal[c].opening:0),backgroundColor:'#c8d4e0'},{label:'Closing',data:balCurs.map(c=>closingBal[c]||0),backgroundColor:balCurs.map(c=>CUR_COLOR[c]||'#1a5fbf')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f9'}}}}});
+  }
+
+  if (window.Chart) {
+    drawCharts();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+    s.onload = drawCharts;
+    document.head.appendChild(s);
+  }
 }
 </script>
 </body>
