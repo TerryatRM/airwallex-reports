@@ -305,7 +305,50 @@ function buildData(txns){
 function showTab(n){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===n));
   document.querySelectorAll('.tc').forEach(c=>c.classList.toggle('active',c.id==='tc-'+n));
-  if(n==='usd')setTimeout(()=>window.recalcUSD&&recalcUSD(),30);
+  if(n==='usd'){
+    setTimeout(()=>{
+      if(window.recalcUSD) recalcUSD();
+      fetchLiveRates();
+    },30);
+  }
+}
+
+// ── LIVE RATES from frankfurter.app (European Central Bank) ──
+async function fetchLiveRates(){
+  const statusEl=document.getElementById('rate-status');
+  if(!statusEl) return;
+  statusEl.textContent='Fetching live rates…';
+  statusEl.style.color='#9aabbc';
+  try {
+    const res=await fetch('https://api.frankfurter.app/latest?from=USD');
+    if(!res.ok) throw new Error('Network error');
+    const data=await res.json();
+    // data.rates gives X per 1 USD — we need USD per 1 X, so invert
+    const currencies=['SGD','GBP','AUD','EUR','HKD'];
+    let updated=[];
+    currencies.forEach(c=>{
+      const el=document.getElementById('r-'+c);
+      if(el&&data.rates[c]){
+        const ratePerUSD=data.rates[c];
+        const usdPer1=1/ratePerUSD;
+        el.value=usdPer1.toFixed(4);
+        updated.push(c);
+      }
+    });
+    if(updated.length>0){
+      const now=new Date();
+      const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      statusEl.textContent=`✓ Live rates updated ${timeStr} (ECB via frankfurter.app)`;
+      statusEl.style.color='#0d9e72';
+      if(window.recalcUSD) recalcUSD();
+    } else {
+      statusEl.textContent='No matching currencies found in response';
+      statusEl.style.color='#c07f1a';
+    }
+  } catch(e){
+    statusEl.textContent='Could not fetch live rates — using defaults. Check internet connection.';
+    statusEl.style.color='#d44f2e';
+  }
 }
 
 // ── RENDER ──
@@ -445,10 +488,16 @@ function renderDash(d){
 
   const usdTab=`<div class="tc" id="tc-usd">
     <div class="rate-box">
-      <div class="rate-lbl">Exchange Rates — edit to update all figures instantly</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="rate-lbl" style="margin-bottom:0">Exchange Rates</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="rate-status" style="font-size:11px;color:#9aabbc">Fetching live rates…</span>
+          <button onclick="fetchLiveRates()" style="font-size:11px;padding:5px 12px;background:#1a5fbf;color:#fff;border:none;border-radius:6px;cursor:pointer">↻ Refresh rates</button>
+        </div>
+      </div>
       <div class="rate-inputs">
         ${rateFields||'<span style="color:#9aabbc;font-size:13px">All transactions already in USD</span>'}
-        <div class="rate-note">Change any rate and all USD amounts below recalculate automatically.</div>
+        <div class="rate-note">Rates auto-fetched from European Central Bank via frankfurter.app. Edit manually to override.</div>
       </div>
     </div>
     <div id="usd-metrics" class="metrics" style="margin-bottom:18px"></div>
