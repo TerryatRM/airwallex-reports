@@ -349,6 +349,7 @@ function render(data) {
     <button class="tab active" data-tab="overview" onclick="showTab('overview')">Overview</button>
     <button class="tab" data-tab="details" onclick="showTab('details')">Income & Expenses</button>
     <button class="tab" data-tab="pl" onclick="showTab('pl')">P&amp;L</button>
+    <button class="tab" data-tab="usd" onclick="showTab('usd')">🇺🇸 USD Consolidated</button>
     <button class="tab" data-tab="insights" onclick="showTab('insights')">Insights</button>
   </div>`;
 
@@ -449,11 +450,183 @@ function render(data) {
   const staff=txns.filter(t=>t.category==='Staff / Contractor');
   if(staff.length>0){const stTotal=staff.reduce((a,t)=>a+t.debit,0);insights.push({type:'info',icon:'👥',title:'Staff / Contractor Costs',finding:`USD ${fmt(stTotal)} across ${staff.length} payments`,action:'Predictable monthly cost. Budget as fixed expense.'});}
 
-  const balSummary=currencies.map(cur=>{const close=closingBal[cur]||0;return `<div class="insight-row"><div class="insight-label">${CUR_FLAGS[cur]||''} ${cur} wallet</div><div style="font-weight:700;color:${close>0?'#0d9e72':'#1a2b45'}">${cur} ${fmt(close)}</div></div>`;}).join('');
+  // USD CONSOLIDATED TAB
+  // Default exchange rates (user can edit on screen)
+  const defaultRates = { SGD: 0.756, GBP: 1.27, AUD: 0.645, HKD: 0.128, EUR: 1.09, USD: 1 };
+
+  // Build all transactions with USD conversion
+  const allTxnsForUSD = txns.filter(t => !['Yield Transfer','FX Conversion'].includes(t.category));
+
+  // Build rate input fields for each non-USD currency found
+  const nonUsdCurs = currencies.filter(c => c !== 'USD');
+  const rateInputs = nonUsdCurs.map(cur => {
+    const rate = defaultRates[cur] || 1;
+    return `<div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:#1a2b45;width:36px">${cur}</span>
+      <span style="font-size:12px;color:#6b7f94">=</span>
+      <input type="number" id="rate-${cur}" value="${rate}" step="0.0001" min="0.0001"
+        style="width:90px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;text-align:right"
+        onchange="recalcUSD()" oninput="recalcUSD()">
+      <span style="font-size:12px;color:#6b7f94">USD</span>
+    </div>`;
+  }).join('');
+
+  const usdTabHtml = `<div class="tab-content" id="tab-usd">
+
+    <!-- Rate editor -->
+    <div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:20px 24px;margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#6b7f94;margin-bottom:14px">Exchange Rates (edit to update)</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+        ${rateInputs || '<span style="color:#9aabbc;font-size:13px">All transactions already in USD</span>'}
+        <div style="margin-left:auto;font-size:11px;color:#9aabbc;max-width:260px;line-height:1.6">
+          Enter the USD equivalent for each currency. All amounts below update instantly.
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary metrics in USD -->
+    <div id="usd-metrics" style="margin-bottom:20px"></div>
+
+    <!-- Consolidated transactions table -->
+    <div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px">
+      <div style="padding:14px 22px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:700">All Transactions — USD Equivalent</span>
+        <span id="usd-txn-count" style="font-size:12px;color:#6b7f94"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="pl-table" style="font-size:12px" id="usd-txn-table">
+          <thead><tr>
+            <th style="width:10%">Date</th>
+            <th style="width:35%">Description</th>
+            <th style="width:12%">Category</th>
+            <th style="width:8%">Orig. Cur.</th>
+            <th style="text-align:right;width:12%">Orig. Amount</th>
+            <th style="text-align:right;width:8%">Rate</th>
+            <th style="text-align:right;width:12%">USD Amount</th>
+          </tr></thead>
+          <tbody id="usd-txn-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Balance sheet in USD -->
+    <div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden">
+      <div style="padding:14px 22px;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:700">Wallet Balances — USD Equivalent</div>
+      <table class="pl-table" id="usd-bal-table">
+        <thead><tr>
+          <th>Wallet</th>
+          <th style="text-align:right">Opening (Native)</th>
+          <th style="text-align:right">Closing (Native)</th>
+          <th style="text-align:right">Rate</th>
+          <th style="text-align:right">Opening (USD)</th>
+          <th style="text-align:right">Closing (USD)</th>
+          <th style="text-align:right">Change (USD)</th>
+        </tr></thead>
+        <tbody id="usd-bal-body"></tbody>
+      </table>
+    </div>
+
+  </div>`;
+
+  // Store data for recalc
+  window._usdData = { txns: allTxnsForUSD, currencies, openingBal, closingBal, defaultRates };
+
+  function recalcUSD() {
+    const d = window._usdData;
+    if (!d) return;
+
+    // Read current rates from inputs
+    const rates = { USD: 1 };
+    d.currencies.filter(c => c !== 'USD').forEach(cur => {
+      const el = document.getElementById('rate-' + cur);
+      rates[cur] = el ? parseFloat(el.value) || defaultRates[cur] || 1 : (defaultRates[cur] || 1);
+    });
+
+    const toUSD = (amt, cur) => amt * (rates[cur] || 1);
+
+    // Summary metrics
+    const totalIncUSD = d.txns.filter(t => t.credit > 0 && t.category.startsWith('Revenue')).reduce((a,t) => a + toUSD(t.credit, t.walletCur), 0);
+    const totalExpUSD = d.txns.filter(t => t.debit > 0).reduce((a,t) => a + toUSD(t.debit, t.walletCur), 0);
+    const netUSD = totalIncUSD - totalExpUSD;
+    const totalClosingUSD = d.currencies.reduce((a, cur) => a + toUSD(d.closingBal[cur] || 0, cur), 0);
+
+    document.getElementById('usd-metrics').innerHTML = `<div class="metrics-grid">
+      <div class="metric"><div class="metric-label">Total Income (USD)</div><div class="metric-value pos">USD ${fmt(totalIncUSD)}</div><div class="metric-sub">All currencies combined</div></div>
+      <div class="metric"><div class="metric-label">Total Expenses (USD)</div><div class="metric-value neg">USD ${fmt(totalExpUSD)}</div><div class="metric-sub">All currencies combined</div></div>
+      <div class="metric"><div class="metric-label">Net Profit / Loss</div><div class="metric-value ${netUSD>=0?'pos':'neg'}">USD ${fmt(netUSD)}</div><div class="metric-sub">${netUSD>=0?'Profit':'Loss'} for the period</div></div>
+      <div class="metric"><div class="metric-label">Total Wallet Balance</div><div class="metric-value pos">USD ${fmt(totalClosingUSD)}</div><div class="metric-sub">All wallets in USD equiv.</div></div>
+    </div>`;
+
+    // Transactions table
+    const noFX = t => !['Yield Transfer','FX Conversion'].includes(t.category);
+    const allTxns = d.txns.filter(noFX).sort((a,b) => a.date.localeCompare(b.date));
+    document.getElementById('usd-txn-count').textContent = allTxns.length + ' transactions';
+
+    let tbody = '';
+    allTxns.forEach(t => {
+      const isIncome = t.credit > 0;
+      const origAmt = isIncome ? t.credit : t.debit;
+      const rate = rates[t.walletCur] || 1;
+      const usdAmt = origAmt * rate;
+      const amtColor = isIncome ? '#0d9e72' : '#d44f2e';
+      const sign = isIncome ? '+' : '-';
+      tbody += `<tr>
+        <td style="white-space:nowrap;color:#9aabbc">${t.date}</td>
+        <td style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.desc}">${t.desc.substring(0,55)}${t.desc.length>55?'…':''}</td>
+        <td style="font-size:11px;color:#9aabbc">${t.category}</td>
+        <td style="text-align:center"><span style="font-size:10px;font-weight:700;background:#f0f4f9;padding:2px 6px;border-radius:4px">${t.walletCur}</span></td>
+        <td style="text-align:right;color:${amtColor};font-weight:500">${sign}${t.walletCur} ${fmt(origAmt)}</td>
+        <td style="text-align:right;color:#9aabbc;font-size:11px">${rate.toFixed(4)}</td>
+        <td style="text-align:right;color:${amtColor};font-weight:700">${sign}USD ${fmt(usdAmt)}</td>
+      </tr>`;
+    });
+    document.getElementById('usd-txn-body').innerHTML = tbody;
+
+    // Balance table
+    let balBody = '';
+    let totalOpenUSD = 0, totalCloseUSD = 0;
+    d.currencies.forEach(cur => {
+      const flag = CUR_FLAGS[cur] || '💱';
+      const open = d.openingBal[cur] ? d.openingBal[cur].opening : 0;
+      const close = d.closingBal[cur] || 0;
+      const rate = rates[cur] || 1;
+      const openUSD = open * rate;
+      const closeUSD = close * rate;
+      const chg = closeUSD - openUSD;
+      totalOpenUSD += openUSD;
+      totalCloseUSD += closeUSD;
+      balBody += `<tr>
+        <td style="font-weight:600">${flag} ${cur}</td>
+        <td style="text-align:right;color:#6b7f94">${cur} ${fmt(open)}</td>
+        <td style="text-align:right;color:#6b7f94">${cur} ${fmt(close)}</td>
+        <td style="text-align:right;color:#9aabbc;font-size:11px">${rate.toFixed(4)}</td>
+        <td style="text-align:right">USD ${fmt(openUSD)}</td>
+        <td style="text-align:right;color:#0d9e72;font-weight:600">USD ${fmt(closeUSD)}</td>
+        <td style="text-align:right;color:${chg>=0?'#0d9e72':'#d44f2e'};font-weight:600">${chg>=0?'+':'–'}USD ${fmt(Math.abs(chg))}</td>
+      </tr>`;
+    });
+    const totalChg = totalCloseUSD - totalOpenUSD;
+    balBody += `<tr class="pl-total">
+      <td><strong>TOTAL</strong></td>
+      <td style="text-align:right"><strong>USD ${fmt(totalOpenUSD)}</strong></td>
+      <td style="text-align:right"><strong>USD ${fmt(totalCloseUSD)}</strong></td>
+      <td></td>
+      <td style="text-align:right"><strong>USD ${fmt(totalOpenUSD)}</strong></td>
+      <td style="text-align:right;color:#0d9e72"><strong>USD ${fmt(totalCloseUSD)}</strong></td>
+      <td style="text-align:right;color:${totalChg>=0?'#0d9e72':'#d44f2e'}"><strong>${totalChg>=0?'+':'–'}USD ${fmt(Math.abs(totalChg))}</strong></td>
+    </tr>`;
+    document.getElementById('usd-bal-body').innerHTML = balBody;
+  }
+
+  // Expose for onchange handlers
+  window.recalcUSD = recalcUSD;
   const insightRows=insights.map(i=>`<div class="insight-card"><div class="ic-header flag-${i.type==='flag'?'red':i.type==='amber'?'amber':'green'}">${i.icon} ${i.title}</div><div class="ic-body"><div class="insight-row"><div><div class="insight-label">${i.finding}</div><div class="insight-action">→ ${i.action}</div></div></div></div></div>`).join('');
   const insightsHtml=`<div class="tab-content" id="tab-insights"><div class="insight-card"><div class="ic-header">💰 Current Wallet Balances</div><div class="ic-body">${balSummary}</div></div>${insightRows}</div>`;
 
-  document.getElementById('main').innerHTML = `<div style="padding:28px 20px 80px;max-width:1100px;margin:0 auto">${metricsHtml}${tabsHtml}${overviewHtml}${detailsHtml}${plHtml}${insightsHtml}</div>`;
+  document.getElementById('main').innerHTML = `<div style="padding:28px 20px 80px;max-width:1100px;margin:0 auto">${metricsHtml}${tabsHtml}${overviewHtml}${detailsHtml}${plHtml}${usdTabHtml}${insightsHtml}</div>`;
+
+  // Trigger initial USD calculation after DOM is ready
+  setTimeout(() => recalcUSD(), 50);
 
   // CHARTS
   const months={};
