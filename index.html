@@ -206,22 +206,75 @@ function showUpload(){
   document.getElementById('app').innerHTML=`
     <div class="up-wrap">
       <div class="up-box" id="dz" onclick="document.getElementById('fi').click()">
-        <input type="file" id="fi" accept=".csv">
+        <input type="file" id="fi" accept=".csv" multiple>
         <div class="up-icon">📊</div>
-        <div class="up-title">Upload Airwallex CSV</div>
-        <div class="up-sub">Drop your CSV here, or <a onclick="event.stopPropagation();document.getElementById('fi').click()">browse to upload</a><br><br>In Airwallex: <strong>Transactions → Export → CSV</strong></div>
-        <div class="pills">
-          <span class="pill p-g">✓ No API key needed</span>
-          <span class="pill p-b">✓ Processed locally</span>
-          <span class="pill p-n">✓ Nothing uploaded anywhere</span>
+        <div class="up-title">Upload Airwallex CSV files</div>
+        <div class="up-sub">
+          Drop one or more CSV files here, or <a onclick="event.stopPropagation();document.getElementById('fi').click()">browse to upload</a><br><br>
+          In Airwallex: <strong>Statements → Account Statement Reports → Export CSV</strong><br>
+          Upload one file per currency — all will be combined into one dashboard
         </div>
+        <div class="pills">
+          <span class="pill p-g">✓ Multiple files at once</span>
+          <span class="pill p-b">✓ USD · SGD · GBP · AUD</span>
+          <span class="pill p-n">✓ Processed locally</span>
+        </div>
+        <div id="file-list" style="margin-top:16px;font-size:12px;color:#6b7f94"></div>
+      </div>
+      <div style="margin-top:14px;text-align:center">
+        <button id="analyze-btn" onclick="analyzeFiles()" style="display:none;padding:12px 32px;background:#1a5fbf;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">
+          Analyze →
+        </button>
       </div>
     </div>`;
   const dz=document.getElementById('dz'),fi=document.getElementById('fi');
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
   dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');loadFile(e.dataTransfer.files[0])});
-  fi.addEventListener('change',e=>loadFile(e.target.files[0]));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFiles(e.dataTransfer.files)});
+  fi.addEventListener('change',e=>handleFiles(e.target.files));
+}
+
+let _pendingFiles = [];
+
+function handleFiles(fileList){
+  _pendingFiles = Array.from(fileList).filter(f=>f.name.endsWith('.csv'));
+  if(_pendingFiles.length===0) return;
+  const list = document.getElementById('file-list');
+  const btn = document.getElementById('analyze-btn');
+  if(list) list.innerHTML = _pendingFiles.map(f=>`<span style="display:inline-block;margin:4px 6px;background:#f0f4f9;padding:3px 10px;border-radius:6px">📄 ${f.name}</span>`).join('');
+  if(btn) btn.style.display='inline-block';
+  if(_pendingFiles.length===1){
+    // single file — auto-analyze
+    analyzeFiles();
+  }
+}
+
+function analyzeFiles(){
+  if(!_pendingFiles||_pendingFiles.length===0)return;
+  document.getElementById('app').innerHTML=`<div class="spin-wrap"><div class="spin"></div><div class="spin-msg">Reading ${_pendingFiles.length} file${_pendingFiles.length>1?'s':''}…</div></div>`;
+  let allTxns=[];
+  let mergedOpen={}, mergedClosing={};
+  let loaded=0;
+  _pendingFiles.forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      const txns=parseCSV(e.target.result,f.name);
+      if(txns&&txns.length>0){
+        allTxns=allTxns.concat(txns);
+        // merge opening balances
+        if(txns._open) Object.assign(mergedOpen, txns._open);
+        if(txns._closingOverride) Object.assign(mergedClosing, txns._closingOverride);
+      }
+      loaded++;
+      if(loaded===_pendingFiles.length){
+        if(allTxns.length===0){showUpload();alert('Could not read the CSV files. Make sure they are Airwallex exports.');return;}
+        allTxns._open=mergedOpen;
+        allTxns._closingOverride=mergedClosing;
+        renderDash(buildData(allTxns));
+      }
+    };
+    r.readAsText(f);
+  });
 }
 
 function lock(){
@@ -229,23 +282,114 @@ function lock(){
   showPW();
 }
 
-function loadFile(f){
-  if(!f)return;
-  document.getElementById('app').innerHTML=`<div class="spin-wrap"><div class="spin"></div><div class="spin-msg">Reading ${f.name}…</div></div>`;
-  const r=new FileReader();
-  r.onload=e=>{
-    const txns=parseCSV(e.target.result);
-    if(!txns||txns.length===0){showUpload();alert('Could not read CSV. Make sure it is an Airwallex Balance Activity export.');return;}
-    renderDash(buildData(txns));
-  };
-  r.readAsText(f);
-}
-
-// ── PARSER ──
-function parseCSV(text){
+// ── PARSER — auto-detects both Airwallex CSV formats ──
+function parseCSV(text, filename){
   const lines=text.trim().split('\n');
   if(lines.length<2)return[];
   const hdrs=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
+
+  // ── FORMAT DETECTION ──
+  // Format A: Balance Activity export — has "wallet currency", "time", "debit net amount"
+  // Format B: ASR Statement export  — has "transaction type", "details", "credit (xxx)", "debit (xxx)"
+  const isFormatB = hdrs.some(h=>h.startsWith('credit (')) || hdrs.some(h=>h.startsWith('debit ('));
+
+  if(isFormatB){
+    return parseASR(lines, hdrs, filename);
+  } else {
+    return parseBalanceActivity(lines, hdrs);
+  }
+}
+
+// ── FORMAT B: ASR Statement CSV (e.g. Radical_Marketing_USD_2025.csv) ──
+function parseASR(lines, hdrs, filename){
+  // Detect currency from header e.g. "Credit (USD)" or from filename
+  let cur = 'USD';
+  const creditHdr = hdrs.find(h=>h.startsWith('credit ('));
+  if(creditHdr){
+    const m=creditHdr.match(/credit \((\w+)\)/i);
+    if(m) cur=m[1].toUpperCase();
+  } else if(filename){
+    // try to extract from filename e.g. "Radical_Marketing_SGD_2025.csv"
+    const m=filename.match(/_(USD|SGD|GBP|AUD|EUR|HKD)_/i);
+    if(m) cur=m[1].toUpperCase();
+  }
+
+  const idx=n=>hdrs.findIndex(h=>h.includes(n.toLowerCase()));
+  const iDate=idx('date'), iType=idx('transaction type'), iDetails=idx('details');
+  const iCr=hdrs.findIndex(h=>h.startsWith('credit ('));
+  const iDb=hdrs.findIndex(h=>h.startsWith('debit ('));
+  const iBal=hdrs.findIndex(h=>h.startsWith('balance ('));
+
+  const txns=[];
+  let openingBal=null, closingBal=null;
+
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    const cols=[];let inQ=false,c='';
+    for(const ch of lines[i]+','){
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){cols.push(c.trim());c='';}
+      else c+=ch;
+    }
+    const g=j=>j>=0?(cols[j]||'').replace(/^"|"$/g,'').replace(/,/g,'').trim():'';
+    const gn=j=>parseFloat(g(j))||0;
+
+    const rawDate=g(iDate);
+    const details=g(iDetails);
+    const type=g(iType);
+    const cre=gn(iCr), deb=gn(iDb), bal=gn(iBal);
+
+    // Capture opening/closing balance rows
+    if(!rawDate && details.toLowerCase().includes('starting balance')){
+      openingBal=bal; continue;
+    }
+    if(!rawDate && details.toLowerCase().includes('ending balance')){
+      closingBal=bal; continue;
+    }
+    if(!rawDate) continue;
+
+    // Parse date — ASR format is "Aug 01 2025" or "2025-08-01"
+    let date='';
+    if(rawDate.match(/^\d{4}-\d{2}-\d{2}/)){
+      date=rawDate.substring(0,10);
+    } else {
+      // "Aug 01 2025" → "2025-08-01"
+      try { date=new Date(rawDate).toISOString().substring(0,10); } catch(e){ date=rawDate; }
+    }
+    const month=date.substring(0,7);
+
+    // Categorise
+    let cat='Other';
+    const dl=details.toLowerCase();
+    const tl=type.toLowerCase();
+    if(tl==='fee')cat='Bank Fee';
+    else if(tl.includes('yield'))cat='Yield Transfer';
+    else if(tl==='conversion')cat='FX Conversion';
+    else if(tl==='payin'||tl.includes('batch settlement'))cat='Revenue – Payin';
+    else if(tl==='global account collection'||tl==='deposit')cat='Revenue – Deposit';
+    else if(dl.includes('cambridge'))cat='Marketing';
+    else if(dl.includes('ana liza')||dl.includes('gajete')||dl.includes('lennard')||dl.includes('tran anh'))cat='Staff / Contractor';
+    else if(dl.includes('dividend')||dl.includes('terence tam'))cat='Director Dividend';
+    else if(tl==='card'&&cre>0)cat='Card Refund';
+    else if(tl==='card')cat='Software & Tools';
+    else if(tl==='payout')cat='Payout';
+
+    txns.push({date,month,type:type.toUpperCase(),ft:'',desc:details,cur,deb,cre,bal,cat});
+  }
+
+  // Attach official opening/closing from the statement
+  if(!txns._open) txns._open={};
+  txns._open[cur]={open: openingBal!==null ? openingBal : (txns[0]?txns[0].bal-txns[0].cre+txns[0].deb:0)};
+  if(closingBal!==null){
+    if(!txns._closingOverride) txns._closingOverride={};
+    txns._closingOverride[cur]=closingBal;
+  }
+  txns._format='ASR';
+  return txns;
+}
+
+// ── FORMAT A: Balance Activity CSV ──
+function parseBalanceActivity(lines, hdrs){
   const idx=n=>hdrs.findIndex(h=>h.includes(n.toLowerCase()));
   const iT=idx('time'),iTy=idx('type'),iFT=idx('financial transaction'),
         iD=idx('description'),iC=idx('wallet currency'),
@@ -283,6 +427,7 @@ function parseCSV(text){
   const fs={};
   txns.forEach(t=>{if(t.bal>0&&!fs[t.cur])fs[t.cur]={open:t.bal-t.cre+t.deb};});
   txns._open=fs;
+  txns._format='BAR';
   return txns;
 }
 
@@ -291,7 +436,11 @@ function buildData(txns){
   const min=txns.reduce((a,t)=>(!a||t.date<a)?t.date:a,'');
   const max=txns.reduce((a,t)=>(!a||t.date>a)?t.date:a,'');
   const ob=txns._open||{};
-  const cb={};txns.forEach(t=>{if(t.bal>0)cb[t.cur]=t.bal;});
+  // Use official closing if available (from ASR), else last seen balance
+  const cb=txns._closingOverride||{};
+  txns.forEach(t=>{if(t.bal>0)cb[t.cur]=cb[t.cur]||t.bal;});
+  // override with official if present
+  if(txns._closingOverride) Object.assign(cb, txns._closingOverride);
   const noFX=t=>!['Yield Transfer','FX Conversion'].includes(t.cat);
   const bc={};
   curs.forEach(c=>{
