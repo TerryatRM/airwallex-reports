@@ -456,7 +456,7 @@ function showTab(n){
   document.querySelectorAll('.tc').forEach(c=>c.classList.toggle('active',c.id==='tc-'+n));
   if(n==='usd'){
     setTimeout(()=>{
-      if(window.recalcUSD) recalcUSD();
+      if(window.changeBaseCurrency) window.changeBaseCurrency();
       fetchLiveRates();
     },30);
   }
@@ -469,33 +469,33 @@ async function fetchLiveRates(){
   statusEl.textContent='Fetching live rates…';
   statusEl.style.color='#9aabbc';
   try {
+    // Always fetch relative to USD as base, then we convert in toBase()
     const res=await fetch('https://api.frankfurter.app/latest?from=USD');
     if(!res.ok) throw new Error('Network error');
     const data=await res.json();
-    // data.rates gives X per 1 USD — we need USD per 1 X, so invert
-    const currencies=['SGD','GBP','AUD','EUR','HKD'];
+    // data.rates = { SGD: 1.292, GBP: 0.755, AUD: 1.431, ... } = X per 1 USD
+    // We store rates as "1 CUR = X USD" so invert
+    const supported=['SGD','GBP','AUD','EUR','HKD','MYR','JPY','CAD'];
     let updated=[];
-    currencies.forEach(c=>{
+    supported.forEach(c=>{
       const el=document.getElementById('r-'+c);
       if(el&&data.rates[c]){
-        const ratePerUSD=data.rates[c];
-        const usdPer1=1/ratePerUSD;
-        el.value=usdPer1.toFixed(4);
+        el.value=(1/data.rates[c]).toFixed(4);
         updated.push(c);
       }
     });
     if(updated.length>0){
       const now=new Date();
       const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      statusEl.textContent=`✓ Live rates updated ${timeStr} (ECB via frankfurter.app)`;
+      statusEl.textContent=`✓ Live rates at ${timeStr} (ECB)`;
       statusEl.style.color='#0d9e72';
-      if(window.recalcUSD) recalcUSD();
+      if(window.recalcConsolidated) recalcConsolidated();
     } else {
-      statusEl.textContent='No matching currencies found in response';
+      statusEl.textContent='No matching currencies found';
       statusEl.style.color='#c07f1a';
     }
   } catch(e){
-    statusEl.textContent='Could not fetch live rates — using defaults. Check internet connection.';
+    statusEl.textContent='Could not fetch live rates — using defaults';
     statusEl.style.color='#d44f2e';
   }
 }
@@ -529,7 +529,7 @@ function renderDash(d){
     <button class="tab active" data-tab="overview" onclick="showTab('overview')">Overview</button>
     <button class="tab" data-tab="detail" onclick="showTab('detail')">Income & Expenses</button>
     <button class="tab" data-tab="pl" onclick="showTab('pl')">P&amp;L</button>
-    <button class="tab" data-tab="usd" onclick="showTab('usd')">🇺🇸 USD Consolidated</button>
+    <button class="tab" data-tab="usd" onclick="showTab('usd')">🔄 Consolidated</button>
     <button class="tab" data-tab="insights" onclick="showTab('insights')">Insights</button>
   </div>`;
 
@@ -631,48 +631,74 @@ function renderDash(d){
   });
   pl+='</div>';
 
-  // ── USD CONSOLIDATED ──
-  const nonUSD=curs.filter(c=>c!=='USD');
-  const rateFields=nonUSD.map(c=>`<div class="rate-field"><span>${c}</span><span style="color:#9aabbc;font-size:12px">=</span><input type="number" id="r-${c}" value="${DEF_RATES[c]||1}" step="0.0001" min="0.0001" onchange="recalcUSD()" oninput="recalcUSD()"><em>USD</em></div>`).join('');
+  // ── CONSOLIDATED TAB (any currency) ──
+  // Build rate fields for all non-USD currencies (used regardless of target currency)
+  const allNonBase=curs; // rates needed for all currencies
+  const rateFields=curs.map(c=>`
+    <div class="rate-field" id="rf-${c}" style="${c==='USD'?'display:none':''}">
+      <span>${c}</span>
+      <span style="color:#9aabbc;font-size:12px">=</span>
+      <input type="number" id="r-${c}" value="${DEF_RATES[c]||1}" step="0.0001" min="0.0001" onchange="recalcConsolidated()" oninput="recalcConsolidated()">
+      <em id="r-label-${c}">USD</em>
+    </div>`).join('');
 
-  const usdTab=`<div class="tc" id="tc-usd">
+  const curOptions=curs.map(c=>`<option value="${c}">${CUR_FLAGS[c]||'💱'} ${c}</option>`).join('');
+
+  const consolidatedTab=`<div class="tc" id="tc-usd">
+
+    <!-- Currency selector + rates -->
     <div class="rate-box">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div class="rate-lbl" style="margin-bottom:0">Exchange Rates</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="rate-lbl" style="margin-bottom:0">Consolidate all in:</div>
+          <select id="base-cur" onchange="changeBaseCurrency()" style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:600;color:#1a2b45;background:#fff;cursor:pointer;outline:none">
+            ${curOptions}
+          </select>
+        </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span id="rate-status" style="font-size:11px;color:#9aabbc">Fetching live rates…</span>
-          <button onclick="fetchLiveRates()" style="font-size:11px;padding:5px 12px;background:#1a5fbf;color:#fff;border:none;border-radius:6px;cursor:pointer">↻ Refresh rates</button>
+          <button onclick="fetchLiveRates()" style="font-size:11px;padding:5px 12px;background:#1a5fbf;color:#fff;border:none;border-radius:6px;cursor:pointer">↻ Live rates</button>
         </div>
       </div>
-      <div class="rate-inputs">
-        ${rateFields||'<span style="color:#9aabbc;font-size:13px">All transactions already in USD</span>'}
-        <div class="rate-note">Rates auto-fetched from European Central Bank via frankfurter.app. Edit manually to override.</div>
+      <div class="rate-inputs" id="rate-inputs-wrap">
+        ${rateFields||'<span style="color:#9aabbc;font-size:13px">Only one currency in data</span>'}
+        <div class="rate-note">Rates auto-fetched from ECB (frankfurter.app). Edit to override.</div>
       </div>
     </div>
+
+    <!-- Metrics -->
     <div id="usd-metrics" class="metrics" style="margin-bottom:18px"></div>
+
+    <!-- Transactions table -->
     <div class="card">
-      <div class="card-hdr"><span>All Transactions — USD Equivalent</span><span class="card-sub" id="usd-count"></span></div>
+      <div class="card-hdr">
+        <span id="cons-txn-title">All Transactions — Consolidated</span>
+        <span class="card-sub" id="usd-count"></span>
+      </div>
       <div style="overflow-x:auto">
         <table class="usd-tbl">
           <thead><tr>
             <th>Date</th><th>Description</th><th>Category</th>
             <th class="r">Orig. Currency</th><th class="r">Orig. Amount</th>
-            <th class="r">Rate</th><th class="r">USD Amount</th>
+            <th class="r">Rate</th><th class="r" id="cons-amt-hdr">Converted Amount</th>
           </tr></thead>
           <tbody id="usd-tbody"></tbody>
         </table>
       </div>
     </div>
+
+    <!-- Balance table -->
     <div class="card">
-      <div class="card-hdr">Wallet Balances — USD Equivalent</div>
+      <div class="card-hdr" id="cons-bal-title">Wallet Balances — Consolidated</div>
       <div style="overflow-x:auto">
         <table class="usd-tbl">
           <thead><tr>
             <th>Wallet</th>
             <th class="r">Opening (Native)</th><th class="r">Closing (Native)</th>
             <th class="r">Rate</th>
-            <th class="r">Opening (USD)</th><th class="r">Closing (USD)</th>
-            <th class="r">Change (USD)</th>
+            <th class="r" id="cons-op-hdr">Opening</th>
+            <th class="r" id="cons-cl-hdr">Closing</th>
+            <th class="r">Change</th>
           </tr></thead>
           <tbody id="usd-balbody"></tbody>
         </table>
@@ -703,33 +729,84 @@ function renderDash(d){
     ${insRows}
   </div>`;
 
-  document.getElementById('app').innerHTML=`<div class="wrap">${metrics}${tabs}${overview}${detail}${pl}${usdTab}${insights}</div>`;
+  document.getElementById('app').innerHTML=`<div class="wrap">${metrics}${tabs}${overview}${detail}${pl}${consolidatedTab}${insights}</div>`;
 
   // store for recalc
   window._uD={txns,curs,ob,cb,noFX:t=>!['Yield Transfer','FX Conversion'].includes(t.cat)};
 
-  // USD recalc function
-  window.recalcUSD=function(){
-    const u=window._uD;if(!u)return;
-    const rates={USD:1};
-    u.curs.filter(c=>c!=='USD').forEach(c=>{const el=document.getElementById('r-'+c);rates[c]=el?parseFloat(el.value)||DEF_RATES[c]||1:(DEF_RATES[c]||1);});
-    const toUSD=(a,c)=>a*(rates[c]||1);
-    const tI=u.txns.filter(t=>t.cre>0&&t.cat.startsWith('Revenue')).reduce((a,t)=>a+toUSD(t.cre,t.cur),0);
-    const tE=u.txns.filter(t=>t.deb>0&&u.noFX(t)).reduce((a,t)=>a+toUSD(t.deb,t.cur),0);
+  // ── Get rate: convert any currency to base currency ──
+  // Rates stored as "1 CUR = X USD" — to convert to any base:
+  // amount in CUR → base = amount * rate[CUR] / rate[base]
+  function getRates(){
+    const r={USD:1};
+    window._uD.curs.forEach(c=>{
+      const el=document.getElementById('r-'+c);
+      r[c]=el?parseFloat(el.value)||DEF_RATES[c]||1:(DEF_RATES[c]||1);
+    });
+    return r;
+  }
+
+  function getBaseCur(){
+    const el=document.getElementById('base-cur');
+    return el?el.value:'USD';
+  }
+
+  function toBase(amount, fromCur, rates, base){
+    if(fromCur===base) return amount;
+    const inUSD=amount*(rates[fromCur]||1);
+    const basePerUSD=1/(rates[base]||1);
+    return inUSD*basePerUSD;
+  }
+
+  // ── Change base currency — update rate labels and hide base row ──
+  window.changeBaseCurrency=function(){
+    const base=getBaseCur();
+    window._uD.curs.forEach(c=>{
+      const rf=document.getElementById('rf-'+c);
+      const lbl=document.getElementById('r-label-'+c);
+      if(rf) rf.style.display=(c===base)?'none':'';
+      if(lbl) lbl.textContent=base;
+    });
+    recalcConsolidated();
+  };
+
+  // ── Main recalc ──
+  window.recalcConsolidated=function(){
+    const u=window._uD; if(!u)return;
+    const rates=getRates();
+    const base=getBaseCur();
+    const flag=CUR_FLAGS[base]||'💱';
+
+    // Update headers
+    const th=document.getElementById('cons-amt-hdr');if(th)th.textContent=`${base} Amount`;
+    const bt=document.getElementById('cons-bal-title');if(bt)bt.textContent=`Wallet Balances — ${flag} ${base} Equivalent`;
+    const tt=document.getElementById('cons-txn-title');if(tt)tt.textContent=`All Transactions — ${flag} ${base} Equivalent`;
+    const oh=document.getElementById('cons-op-hdr');if(oh)oh.textContent=`Opening (${base})`;
+    const ch=document.getElementById('cons-cl-hdr');if(ch)ch.textContent=`Closing (${base})`;
+
+    const conv=(a,c)=>toBase(a,c,rates,base);
+
+    // Metrics
+    const tI=u.txns.filter(t=>t.cre>0&&t.cat.startsWith('Revenue')).reduce((a,t)=>a+conv(t.cre,t.cur),0);
+    const tE=u.txns.filter(t=>t.deb>0&&u.noFX(t)).reduce((a,t)=>a+conv(t.deb,t.cur),0);
     const net=tI-tE;
-    const totCl=u.curs.reduce((a,c)=>a+toUSD(u.cb[c]||0,c),0);
+    const totCl=u.curs.reduce((a,c)=>a+conv(u.cb[c]||0,c),0);
     const me=document.getElementById('usd-metrics');
     if(me)me.innerHTML=`
-      <div class="metric"><div class="m-label">Total Income (USD)</div><div class="m-val pos">USD ${fmt(tI)}</div><div class="m-sub">All currencies</div></div>
-      <div class="metric"><div class="m-label">Total Expenses (USD)</div><div class="m-val neg">USD ${fmt(tE)}</div><div class="m-sub">All currencies</div></div>
-      <div class="metric"><div class="m-label">Net Profit / Loss</div><div class="m-val ${net>=0?'pos':'neg'}">USD ${fmt(net)}</div><div class="m-sub">${net>=0?'Profit':'Loss'}</div></div>
-      <div class="metric"><div class="m-label">Total Balance (USD)</div><div class="m-val pos">USD ${fmt(totCl)}</div><div class="m-sub">All wallets combined</div></div>`;
-    // transactions
+      <div class="metric"><div class="m-label">Total Income</div><div class="m-val pos">${base} ${fmt(tI)}</div><div class="m-sub">All currencies → ${base}</div></div>
+      <div class="metric"><div class="m-label">Total Expenses</div><div class="m-val neg">${base} ${fmt(tE)}</div><div class="m-sub">All currencies → ${base}</div></div>
+      <div class="metric"><div class="m-label">Net Profit / Loss</div><div class="m-val ${net>=0?'pos':'neg'}">${base} ${fmt(net)}</div><div class="m-sub">${net>=0?'Profit':'Loss'}</div></div>
+      <div class="metric"><div class="m-label">Total Balance</div><div class="m-val pos">${base} ${fmt(totCl)}</div><div class="m-sub">All wallets → ${base}</div></div>`;
+
+    // Transactions
     const allT=u.txns.filter(u.noFX).sort((a,b)=>a.date.localeCompare(b.date));
     const cnt=document.getElementById('usd-count');if(cnt)cnt.textContent=allT.length+' transactions';
     let tbody='';
     allT.forEach(t=>{
-      const isIn=t.cre>0,orig=isIn?t.cre:t.deb,rate=rates[t.cur]||1,usd=orig*rate;
+      const isIn=t.cre>0,orig=isIn?t.cre:t.deb;
+      const converted=conv(orig,t.cur);
+      // Rate shown = how much 1 unit of orig cur = in base cur
+      const displayRate=(t.cur===base)?1:toBase(1,t.cur,rates,base);
       const col=isIn?'#0d9e72':'#d44f2e',sg=isIn?'+':'-';
       tbody+=`<tr>
         <td style="white-space:nowrap;color:#9aabbc">${t.date}</td>
@@ -737,36 +814,40 @@ function renderDash(d){
         <td style="font-size:11px;color:#9aabbc">${t.cat}</td>
         <td class="r"><span style="font-size:10px;font-weight:700;background:#f0f4f9;padding:2px 6px;border-radius:4px">${t.cur}</span></td>
         <td class="r" style="color:${col};font-weight:500">${sg}${t.cur} ${fmt(orig)}</td>
-        <td class="r" style="color:#9aabbc;font-size:11px">${rate.toFixed(4)}</td>
-        <td class="r" style="color:${col};font-weight:700">${sg}USD ${fmt(usd)}</td>
+        <td class="r" style="color:#9aabbc;font-size:11px">${displayRate.toFixed(4)}</td>
+        <td class="r" style="color:${col};font-weight:700">${sg}${base} ${fmt(converted)}</td>
       </tr>`;
     });
     const tb=document.getElementById('usd-tbody');if(tb)tb.innerHTML=tbody;
-    // balances
+
+    // Balances
     let bb='';let totOp=0,totCl2=0;
     u.curs.forEach(c=>{
-      const flag=CUR_FLAGS[c]||'💱',op=u.ob[c]?u.ob[c].open:0,cl=u.cb[c]||0;
-      const rate=rates[c]||1,opU=op*rate,clU=cl*rate,chg=clU-opU;
-      totOp+=opU;totCl2+=clU;
+      const fl=CUR_FLAGS[c]||'💱',op=u.ob[c]?u.ob[c].open:0,cl=u.cb[c]||0;
+      const opB=conv(op,c),clB=conv(cl,c),chg=clB-opB;
+      totOp+=opB;totCl2+=clB;
       bb+=`<tr>
-        <td style="font-weight:600">${flag} ${c}</td>
+        <td style="font-weight:600">${fl} ${c}</td>
         <td class="r" style="color:#6b7f94">${c} ${fmt(op)}</td>
         <td class="r" style="color:#6b7f94">${c} ${fmt(cl)}</td>
-        <td class="r" style="color:#9aabbc;font-size:11px">${rate.toFixed(4)}</td>
-        <td class="r">USD ${fmt(opU)}</td>
-        <td class="r" style="color:#0d9e72;font-weight:600">USD ${fmt(clU)}</td>
-        <td class="r" style="color:${chg>=0?'#0d9e72':'#d44f2e'};font-weight:600">${chg>=0?'+':'–'}USD ${fmt(Math.abs(chg))}</td>
+        <td class="r" style="color:#9aabbc;font-size:11px">${toBase(1,c,rates,base).toFixed(4)}</td>
+        <td class="r">${base} ${fmt(opB)}</td>
+        <td class="r" style="color:#0d9e72;font-weight:600">${base} ${fmt(clB)}</td>
+        <td class="r" style="color:${chg>=0?'#0d9e72':'#d44f2e'};font-weight:600">${chg>=0?'+':'–'}${base} ${fmt(Math.abs(chg))}</td>
       </tr>`;
     });
     const totChg=totCl2-totOp;
     bb+=`<tr class="usd-tot">
-      <td><strong>TOTAL</strong></td><td class="r" style="color:#6b7f94"></td><td class="r" style="color:#6b7f94"></td><td></td>
-      <td class="r"><strong>USD ${fmt(totOp)}</strong></td>
-      <td class="r" style="color:#0d9e72"><strong>USD ${fmt(totCl2)}</strong></td>
-      <td class="r" style="color:${totChg>=0?'#0d9e72':'#d44f2e'}"><strong>${totChg>=0?'+':'–'}USD ${fmt(Math.abs(totChg))}</strong></td>
+      <td><strong>TOTAL</strong></td><td class="r"></td><td class="r"></td><td></td>
+      <td class="r"><strong>${base} ${fmt(totOp)}</strong></td>
+      <td class="r" style="color:#0d9e72"><strong>${base} ${fmt(totCl2)}</strong></td>
+      <td class="r" style="color:${totChg>=0?'#0d9e72':'#d44f2e'}"><strong>${totChg>=0?'+':'–'}${base} ${fmt(Math.abs(totChg))}</strong></td>
     </tr>`;
     const bbd=document.getElementById('usd-balbody');if(bbd)bbd.innerHTML=bb;
   };
+
+  // alias for backward compat
+  window.recalcUSD=window.recalcConsolidated;
 
   // load charts lazily
   function drawCharts(){
