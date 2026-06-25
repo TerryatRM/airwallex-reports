@@ -462,42 +462,56 @@ function showTab(n){
   }
 }
 
-// ── LIVE RATES from frankfurter.app (European Central Bank) ──
+// ── LIVE RATES from open.er-api.com (free, no key, CORS enabled) ──
 async function fetchLiveRates(){
   const statusEl=document.getElementById('rate-status');
   if(!statusEl) return;
   statusEl.textContent='Fetching live rates…';
   statusEl.style.color='#9aabbc';
-  try {
-    // Always fetch relative to USD as base, then we convert in toBase()
-    const res=await fetch('https://api.frankfurter.app/latest?from=USD');
-    if(!res.ok) throw new Error('Network error');
-    const data=await res.json();
-    // data.rates = { SGD: 1.292, GBP: 0.755, AUD: 1.431, ... } = X per 1 USD
-    // We store rates as "1 CUR = X USD" so invert
-    const supported=['SGD','GBP','AUD','EUR','HKD','MYR','JPY','CAD'];
-    let updated=[];
-    supported.forEach(c=>{
-      const el=document.getElementById('r-'+c);
-      if(el&&data.rates[c]){
-        el.value=(1/data.rates[c]).toFixed(4);
-        updated.push(c);
+
+  // Try multiple free APIs in order until one works
+  const apis=[
+    {url:'https://open.er-api.com/v6/latest/USD', parse:d=>d.rates},
+    {url:'https://api.exchangerate-api.com/v4/latest/USD', parse:d=>d.rates},
+    {url:'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', parse:d=>d.usd}
+  ];
+
+  for(const api of apis){
+    try {
+      const res=await fetch(api.url);
+      if(!res.ok) continue;
+      const data=await res.json();
+      const rates=api.parse(data);
+      if(!rates) continue;
+
+      const supported=['SGD','GBP','AUD','EUR','HKD','MYR','JPY','CAD'];
+      let updated=[];
+      supported.forEach(c=>{
+        const key=c.toLowerCase(); // jsdelivr uses lowercase keys
+        const rate=rates[c]||rates[key];
+        const el=document.getElementById('r-'+c);
+        if(el&&rate){
+          // rates = X per 1 USD, we store as 1 CUR = X USD so invert
+          el.value=(1/rate).toFixed(4);
+          updated.push(c);
+        }
+      });
+
+      if(updated.length>0){
+        const now=new Date();
+        const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        statusEl.textContent=`✓ Live rates at ${timeStr}`;
+        statusEl.style.color='#0d9e72';
+        if(window.recalcConsolidated) recalcConsolidated();
+        return; // success — stop trying
       }
-    });
-    if(updated.length>0){
-      const now=new Date();
-      const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      statusEl.textContent=`✓ Live rates at ${timeStr} (ECB)`;
-      statusEl.style.color='#0d9e72';
-      if(window.recalcConsolidated) recalcConsolidated();
-    } else {
-      statusEl.textContent='No matching currencies found';
-      statusEl.style.color='#c07f1a';
-    }
-  } catch(e){
-    statusEl.textContent='Could not fetch live rates — using defaults';
-    statusEl.style.color='#d44f2e';
+    } catch(e){ continue; }
   }
+
+  // All APIs failed
+  statusEl.textContent='Using default rates (live fetch unavailable)';
+  statusEl.style.color='#c07f1a';
+  if(window.recalcConsolidated) recalcConsolidated();
 }
 
 // ── RENDER ──
