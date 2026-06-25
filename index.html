@@ -529,14 +529,58 @@ function renderDash(d){
   const sE=txns.filter(t=>t.cur==='SGD'&&t.deb>0&&!['Yield Transfer','FX Conversion'].includes(t.cat)).reduce((a,t)=>a+t.deb,0);
   const uE=txns.filter(t=>t.cur==='USD'&&t.deb>0&&!['Yield Transfer','FX Conversion'].includes(t.cat)).reduce((a,t)=>a+t.deb,0);
   const uY=txns.filter(t=>t.cur==='USD'&&t.cat==='Yield Transfer').reduce((a,t)=>a+t.deb,0);
+  const gY=txns.filter(t=>t.cur==='GBP'&&t.cat==='Yield Transfer').reduce((a,t)=>a+t.deb,0);
 
-  const metrics=`<div class="metrics">
+  // ── YIELD PANEL — shown above metrics, persists in sessionStorage ──
+  const savedUsdYield = sessionStorage.getItem('yield_usd') || '';
+  const savedGbpYield = sessionStorage.getItem('yield_gbp') || '';
+
+  const yieldPanel=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#6b7f94;white-space:nowrap">💰 Yield Balances</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:12px;color:#3a4a5c;font-weight:500">USD Yield:</label>
+        <input type="number" id="yield-usd" value="${savedUsdYield}" placeholder="e.g. 155000" min="0" step="0.01"
+          style="width:130px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none"
+          oninput="updateYield()" onchange="updateYield()">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:12px;color:#3a4a5c;font-weight:500">GBP Yield:</label>
+        <input type="number" id="yield-gbp" value="${savedGbpYield}" placeholder="e.g. 15000" min="0" step="0.01"
+          style="width:130px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none"
+          oninput="updateYield()" onchange="updateYield()">
+      </div>
+    </div>
+    <div style="font-size:11px;color:#9aabbc;margin-left:auto">Enter your actual Airwallex Yield balance — check in Airwallex → Yield</div>
+  </div>`;
+
+  function getYield(){
+    const u=parseFloat(document.getElementById('yield-usd')?.value)||uY;
+    const g=parseFloat(document.getElementById('yield-gbp')?.value)||gY;
+    return {u,g};
+  }
+
+  window.updateYield=function(){
+    const u=parseFloat(document.getElementById('yield-usd')?.value)||0;
+    const g=parseFloat(document.getElementById('yield-gbp')?.value)||0;
+    sessionStorage.setItem('yield_usd', u||'');
+    sessionStorage.setItem('yield_gbp', g||'');
+    const el=document.getElementById('yield-metric');
+    const gelEl=document.getElementById('yield-gbp-sub');
+    if(el) el.textContent='USD '+(u?fmt(u):fmt(uY));
+    if(gelEl) gelEl.textContent='+ GBP '+(g?fmt(g):fmt(gY));
+  };
+
+  const yieldDisplay = savedUsdYield ? parseFloat(savedUsdYield) : uY;
+  const yieldGBPDisplay = savedGbpYield ? parseFloat(savedGbpYield) : gY;
+
+  const metrics=`${yieldPanel}<div class="metrics">
     <div class="metric"><div class="m-label">SGD Income</div><div class="m-val pos">SGD ${fmt(sI)}</div><div class="m-sub">Client deposits</div></div>
     <div class="metric"><div class="m-label">USD Income</div><div class="m-val pos">USD ${fmt(uI)}</div><div class="m-sub">Payins & deposits</div></div>
     <div class="metric"><div class="m-label">GBP Income</div><div class="m-val pos">GBP ${fmt(gI)}</div><div class="m-sub">Client deposits</div></div>
     <div class="metric"><div class="m-label">SGD Net</div><div class="m-val ${sI-sE>=0?'pos':'neg'}">SGD ${fmt(sI-sE)}</div><div class="m-sub">After expenses</div></div>
     <div class="metric"><div class="m-label">USD Net</div><div class="m-val ${uI-uE>=0?'pos':'neg'}">USD ${fmt(uI-uE)}</div><div class="m-sub">Excl. FX & yield</div></div>
-    <div class="metric"><div class="m-label">In Yield</div><div class="m-val neu">USD ${fmt(uY)}</div><div class="m-sub">Parked, earning interest</div></div>
+    <div class="metric"><div class="m-label">In Yield</div><div class="m-val neu" id="yield-metric">USD ${fmt(yieldDisplay)}</div><div class="m-sub" id="yield-gbp-sub">+ GBP ${fmt(yieldGBPDisplay)}</div></div>
   </div>`;
 
   const tabs=`<div class="tabs">
